@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% comment %}
+  Layout for the first-time setup (no side menu yet):
+    Step 1 Account  ->  Step 2 Studio details  ->  Step 3 Resources  ->  Dashboard
+  Pages extending this fill {% block step_body %} and set {% block step %} to 2 or 3.
+  After setup, the same pages show inside the main website via {% block content %}.
+{% endcomment %}
+{% block public %}
+<div class="wizard">
+  <header class="wizard-top">
+    <div class="brand dark"><span class="brand-mark"></span> Sreeva</div>
+    <ol class="steps" aria-label="Setup progress">
+      {% with s=step_no|default:"2" %}
+      <li class="done"><span>✓</span> Account</li>
+      <li class="{% if s == '2' %}current{% else %}done{% endif %}"><span>{% if s == '2' %}2{% else %}✓{% endif %}</span> Studio details</li>
+      <li class="{% if s == '3' %}current{% endif %}"><span>3</span> Resources</li>
+      {% endwith %}
+    </ol>
+  </header>
+  <main class="wizard-card {% block wizard_width %}{% endblock %}">
+    {% include "_messages.html" %}
+    {% block step_body %}{% endblock %}
+  </main>
+  {% if user.is_authenticated %}
+  <footer class="wizard-foot">
+    <form method="post" action="{% url 'logout' %}" class="auth-logout">{% csrf_token %}
+      <span>Logged in as <b>{{ user.first_name|default:user.username }}</b> (@{{ user.username }})</span>
+      <button type="submit" class="btn sm">{% include "_icon.html" with name="logout" sm=1 %} Log out</button>
+    </form>
+  </footer>
+  {% endif %}
+</div>
+{% endblock %}

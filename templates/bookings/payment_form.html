@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}{% if editing %}Edit payment{% else %}Record payment{% endif %}{% endblock %}
+{% block heading %}{% if editing %}Edit payment{% else %}Record a payment{% endif %}{% endblock %}
+{% block subtitle %}<div class="subtitle"><a href="{{ booking.get_absolute_url }}">{{ booking.display_title }}</a> · {{ booking.client.name }} · {{ booking.client.phone|phone }}</div>{% endblock %}
+{% block actions %}<a class="btn" href="{{ booking.get_absolute_url }}">Back to booking</a>{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Events in this booking</h2><span class="muted" style="font-size:.82rem">each billed separately</span></div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>Event</th><th class="num">Price</th><th class="num">Paid</th><th class="num">Pending</th></tr></thead>
+          <tbody>
+          {% for e in events %}
+            <tr><td><b>{{ e.name }}</b> <span class="muted" style="font-size:.8rem">{{ e.date|date:"d M" }}</span></td>
+              <td class="num">{{ e.amount|inr }}</td><td class="num green">{{ e.paid_total|inr }}</td>
+              <td class="num {% if e.pending_total %}red strong{% endif %}">{% if e.pending_total %}{{ e.pending_total|inr }}{% else %}Paid ✓{% endif %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-body">
+        {% if editing %}
+          <div class="hint-box mb" data-editing>Correcting a payment of <b>{{ payment.amount|inr }}</b> received on <b>{{ payment.date|date:"d M Y" }}</b>. The change is recorded in the Activity log.</div>
+        {% elif not booking.pending %}
+          <div class="hint-box mb">All events in this booking are <b>fully paid</b>. If a price went up, <a href="{% url 'booking_edit' booking.pk %}">edit the booking</a> first.</div>
+        {% else %}
+        {% endif %}
+
+        {% if not booking.pending and not editing %}{% else %}
+        <form method="post" novalidate {% if not editing %}data-draft="payment" data-bound="{{ form.is_bound|yesno:'1,0' }}"{% endif %}>
+          {% csrf_token %}
+          <input type="hidden" name="from" value="page">
+          {% if form.non_field_errors %}<div class="form-errors">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+          <div class="form-grid">
+            {% include "_field.html" with field=form.session cls="full" %}
+            {% include "_field.html" with field=form.amount %}
+            {% include "_field.html" with field=form.date %}
+            {% include "_field.html" with field=form.mode %}
+            {% include "_field.html" with field=form.reference %}
+            {% include "_field.html" with field=form.note cls="full" %}
+          </div>
+          <div class="btn-row mt">
+            <button class="btn primary" type="submit">{% include "_icon.html" with name="check" sm=1 %} {% if editing %}Save changes{% else %}Save payment{% endif %}</button>
+            <a class="btn" href="{{ booking.get_absolute_url }}">Cancel</a>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Payment history</h2><span class="count">{{ payments|length }}</span></div>
+      <ul class="list-plain card-body" style="padding-top:4px;padding-bottom:4px">
+        {% for p in payments %}
+          <li class="pay-row">
+            <div>
+              <div class="amt">{{ p.amount|inr }} <span class="chip">{{ p.session.name|default:"—" }}</span>{% if editing and p.pk == payment.pk %} <span class="badge work">editing</span>{% endif %}</div>
+              <div class="muted" style="font-size:.8rem">{{ p.date|date:"d M Y" }} · {{ p.get_mode_display }}{% if p.note %} · {{ p.note }}{% endif %}</div>
+            </div>
+            <a class="btn sm" href="{% url 'payment_edit' p.pk %}" title="Edit">{% include "_icon.html" with name="edit" sm=1 %}</a>
+          </li>
+        {% empty %}<li class="empty">No payments yet.</li>{% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ event_pending|json_script:"event-pending" }}
+<script>
+(function () {
+  var sel = document.getElementById("id_session"), amt = document.getElementById("id_amount");
+  var data = JSON.parse(document.getElementById("event-pending").textContent || "{}");
+  if (!sel || !amt || document.querySelector("[data-editing]")) return;
+  sel.addEventListener("change", function () {
+    var v = data[sel.value];
+    if (v !== undefined) { amt.value = v; amt.dispatchEvent(new Event("input", { bubbles: true })); }
+  });
+})();
+</script>
+{% endblock %}

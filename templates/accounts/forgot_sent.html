@@ -1,0 +1,22 @@
+{% extends "auth_base.html" %}
+{% block title %}Check your email{% endblock %}
+{% block card %}
+  <h2>Check your email</h2>
+  <p class="muted">Check your inbox (and spam).</p>
+  {% if console_email and on_laptop %}
+  <div class="hint-box mt">
+    <b>Running on this computer without email set up?</b><br>
+    The email is printed in the <b>Command Prompt window</b> where the server is running.
+    Look there for “Your username is” and the reset link, and open that link in this browser.
+  </div>
+  {% elif console_email %}
+  <div class="hint-box mt">
+    <b>No email arriving?</b><br>
+    Staff: ask the studio owner to set a new password for you (Studio settings → Staff logins).
+  </div>
+  {% endif %}
+  <div class="btn-row mt" style="flex-direction:column;align-items:stretch">
+    <a class="btn primary block" href="{% url 'login' %}">Back to log in</a>
+    <a class="btn block" href="{% url 'password_reset' %}">Try a different email</a>
+  </div>
+{% endblock %}

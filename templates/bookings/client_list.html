@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Customers{% endblock %}
+{% block heading %}Customers{% endblock %}
+
+{% block content %}
+<form class="filters" method="get">
+  <input class="input" type="search" name="q" value="{{ q }}" placeholder="Search by name or phone…">
+  <button class="btn">Search</button>
+</form>
+<div class="card">
+  <div class="table-wrap">
+    <table class="table stack">
+      <thead><tr><th>Name</th><th>Phone</th><th class="num">Bookings</th><th>Last event</th></tr></thead>
+      <tbody>
+      {% for c in page %}
+        <tr class="rowlink" data-href="{{ c.get_absolute_url }}">
+          <td data-label="Name"><a class="strong" style="color:var(--ink)" href="{{ c.get_absolute_url }}">{{ c.name }}</a></td>
+          <td data-label="Phone"><a href="tel:{{ c.phone }}">{{ c.phone|phone }}</a></td>
+          <td data-label="Bookings" class="num">{{ c.n_bookings }}</td>
+          <td data-label="Last event">{{ c.last_event|date:"d M Y"|default:"—" }}</td>
+        </tr>
+      {% empty %}<tr><td colspan="4">{% include "_empty.html" with icon="users" title="No customers yet" text="They appear here after the first booking." %}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if page.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% if page.has_previous %}<a class="btn sm" href="{% qs page=page.previous_page_number %}">← Prev</a>{% endif %}
+  <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn sm" href="{% qs page=page.next_page_number %}">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

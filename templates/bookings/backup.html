@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Backup & export{% endblock %}
+{% block heading %}Studio settings{% endblock %}
+
+{% block content %}
+{% include "studios/_settings_tabs.html" %}
+<p class="page-note">Keep your studio's records safe, and open them in Excel whenever you need.</p>
+<div class="grid-halves">
+  <section class="card">
+    <div class="card-head"><h2>{% include "_icon.html" with name="list" %} Download to Excel</h2></div>
+    <div class="card-body">
+      <p class="muted" style="margin-top:0">One Excel file with 4 sheets: <b>Bookings</b>, <b>Events</b>, <b>Payments</b> and <b>Customers</b>. Good for accounts, the auditor, or a printout.</p>
+      <div class="quick-range">
+        <a class="btn primary" href="{% url 'export_excel' %}">{% include "_icon.html" with name="download" sm=1 %} Everything</a>
+        <a class="btn" href="{% url 'export_excel' %}?from={{ month_start|date:'Y-m-d' }}&to={{ today|date:'Y-m-d' }}">This month</a>
+      </div>
+      <form method="get" action="{% url 'export_excel' %}" class="range-form">
+        <div class="field"><label for="ex-from">From</label><input type="date" id="ex-from" name="from"></div>
+        <div class="field"><label for="ex-to">To</label><input type="date" id="ex-to" name="to"></div>
+        <button class="btn" type="submit">{% include "_icon.html" with name="download" sm=1 %} Download dates</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>{% include "_icon.html" with name="shield" %} Automatic backups</h2>
+      <form method="post" action="{% url 'backup_now' %}">{% csrf_token %}<button class="btn sm" type="submit">Back up now</button></form>
+    </div>
+    <div class="card-body">
+      {% if latest %}
+      <div class="backup-ok">✓ Last backup <b>{% if just_now %}just now{% else %}{{ latest.when|timesince }} ago{% endif %}</b> · {{ count }} cop{{ count|pluralize:"y,ies" }} kept</div>
+      {% else %}
+      <div class="backup-ok none">No backup yet. Click <b>Back up now</b>.</div>
+      {% endif %}
+      <p class="muted">Sreeva saves a full copy of all your data <b>every time it starts</b> and <b>once a day</b>. The newest 30 copies are kept in this folder on this computer:</p>
+      <code class="folder">{{ folder }}</code>
+      {% if files %}
+      <table class="table mt" style="font-size:.86rem">
+        <thead><tr><th>Backup</th><th>Saved</th><th class="num">Size</th></tr></thead>
+        <tbody>{% for f in files %}<tr><td>{{ f.name }}</td><td>{{ f.when|date:"d M Y, h:i A" }}</td><td class="num">{{ f.size|filesizeformat }}</td></tr>{% endfor %}</tbody>
+      </table>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+<section class="card mt">
+  <div class="card-head"><h2>Keep a copy away from this computer</h2></div>
+  <div class="card-body tips">
+    <p>If this computer breaks or is stolen, the copies above go with it. Once a week:</p>
+    <ol>
+      <li>Open the folder shown above (copy the path into File Explorer's address bar).</li>
+      <li>Copy the newest file to a <b>pen drive</b>, or upload it to <b>Google Drive</b>.</li>
+    </ol>
+    <p class="muted"><b>To restore a backup:</b> close the black Sreeva window, copy the backup file into the Sreeva folder, rename it to <code>db.sqlite3</code> (replace the old one), then start Sreeva again.</p>
+  </div>
+</section>
+{% endblock %}

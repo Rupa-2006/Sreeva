@@ -1,0 +1,50 @@
+{% load static studio_tags %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receipt {{ payment.receipt_no }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% vstatic 'css/app.css' %}">
+</head>
+<body>
+  <div class="receipt">
+    <div class="r-head">
+      <div>
+        <div class="r-studio">{{ booking.studio.name }}</div>
+        <div class="muted">{{ booking.studio.address }}{% if booking.studio.city %}, {{ booking.studio.city }}{% endif %}</div>
+        <div class="muted">Ph: {{ booking.studio.phone|phone }}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="strong">PAYMENT RECEIPT</div>
+        <div class="muted">{{ payment.receipt_no }}</div>
+        <div class="muted">{{ payment.date|date:"d M Y" }}</div>
+      </div>
+    </div>
+    <div class="r-amount">{{ payment.amount|inr }}</div>
+    <div class="muted">received from <b style="color:var(--ink)">{{ booking.client.name }}</b> ({{ booking.client.phone|phone }})</div>
+    <table>
+      <tr><td>Booking</td><td>{{ booking.display_title }} (#{{ booking.pk }})</td></tr>
+      {% with e=payment.session %}{% if e %}
+      <tr><td>For event</td><td>{{ e.name }} · {{ e.date|date:"d M Y" }}</td></tr>
+      {% if e.charges %}
+      <tr><td>{% if e.package %}{{ e.package.name }}{% else %}Photography / video{% endif %}</td><td>{{ e.base_price|inr }}</td></tr>
+      {% for label, amt in e.charges %}<tr><td>{{ label }}</td><td>{{ amt|inr_signed }}</td></tr>{% endfor %}
+      {% endif %}
+      <tr><td>Event price</td><td>{{ e.amount|inr }}</td></tr>
+      <tr><td>Paid for this event till date</td><td>{{ e.paid|inr }}</td></tr>
+      <tr><td>Balance for this event</td><td>{{ e.pending|inr }}</td></tr>
+      {% endif %}{% endwith %}
+      <tr><td>Payment mode</td><td>{{ payment.get_mode_display }}{% if payment.reference %} · {{ payment.reference }}{% endif %}</td></tr>
+    </table>
+    {% if booking.sessions.count > 1 %}<p class="muted" style="font-size:.85rem;margin-top:10px">Whole booking: {{ booking.total_amount|inr }} · paid {{ booking.paid|inr }} · balance {{ booking.pending|inr }}</p>{% endif %}
+    <div class="r-foot">
+      <span>Thank you for choosing {{ booking.studio.name }}.</span>
+      <span style="text-align:center">______________________<br>Authorised signature</span>
+    </div>
+  </div>
+  <div class="no-print">
+    <button class="btn primary" onclick="window.print()">Print / Save as PDF</button>
+    <a class="btn" href="{{ booking.get_absolute_url }}">Back to booking</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Calendar{% endblock %}
+{% block heading %}Calendar{% endblock %}
+{% block actions %}{% if is_owner %}<a class="btn primary" href="{% url 'booking_new' %}">{% include "_icon.html" with name="plus" sm=1 %} New booking</a>{% endif %}{% endblock %}
+
+{% block content %}
+<div class="cal-head">
+  <div class="btn-row">
+    <a class="btn sm" href="?y={{ prev.year }}&m={{ prev.month }}" aria-label="Previous month">{% include "_icon.html" with name="chevron-left" sm=1 %}</a>
+    <h2>{{ month|date:"F Y" }}</h2>
+    <a class="btn sm" href="?y={{ next.year }}&m={{ next.month }}" aria-label="Next month">{% include "_icon.html" with name="chevron-right" sm=1 %}</a>
+    <a class="btn sm" href="?">Today</a>
+  </div>
+  <div class="legend"><span><i style="background:var(--green)"></i>Confirmed</span><span><i style="background:var(--blue)"></i>Enquiry</span></div>
+</div>
+
+<div class="cal-wrap">
+  <div class="cal" data-cal>
+    {% for d in weekdays %}<div class="dow">{{ d }}</div>{% endfor %}
+    {% for week in grid %}{% for cell in week %}
+      {% if cell.in_month %}
+      <a class="day{% if cell.date == today %} today{% endif %}{% if cell.date == selected %} sel{% endif %}{% if cell.sessions %} has{% endif %}"
+         href="?y={{ month.year }}&m={{ month.month }}&d={{ cell.date|date:'Y-m-d' }}#day-detail" data-day="{{ cell.date|date:'Y-m-d' }}"
+         aria-label="{{ cell.date|date:'l, d F' }}{% if cell.sessions %}, {{ cell.sessions|length }} event{{ cell.sessions|length|pluralize }}{% endif %}">
+        <span class="dnum">{{ cell.date.day }}</span>
+        {% for s in cell.sessions|slice:":3" %}
+          <span class="ev {{ s.booking.status }}"><b>{{ s.short_label }}</b> {{ s.booking.client.name }}</span>
+        {% endfor %}
+        {% if cell.sessions|length > 3 %}<span class="ev-more">+{{ cell.sessions|length|add:"-3" }} more</span>{% endif %}
+        {% if cell.sessions %}<span class="dots">{% for s in cell.sessions|slice:":3" %}<i class="{{ s.booking.status }}"></i>{% endfor %}</span>{% endif %}
+      </a>
+      {% else %}
+      <div class="day out"><span class="dnum">{{ cell.date.day }}</span></div>
+      {% endif %}
+    {% endfor %}{% endfor %}
+  </div>
+
+  <div id="day-detail">
+    {% for day, items in days %}
+      <section class="card day-detail" data-detail="{{ day|date:'Y-m-d' }}"{% if day != selected %} hidden{% endif %}>
+        <div class="card-head">
+          <h2>{{ day|date:"l, d M" }}{% if day == today %} · Today{% endif %}</h2>
+          {% if items %}<span class="count">{{ items|length }}</span>{% endif %}
+        </div>
+        {% if items %}
+          {% for s in items %}{% include "bookings/_day_shoot.html" %}{% endfor %}
+        {% else %}
+          {% include "_empty.html" with icon="calendar" title="Free day" text="Nothing booked on this date." %}
+        {% endif %}
+        {% if is_owner and day >= today %}
+          <div class="dd-foot"><a class="btn primary" href="{% url 'booking_new' %}?date={{ day|date:'Y-m-d' }}">{% include "_icon.html" with name="plus" sm=1 %} New booking on {{ day|date:"d M" }}</a></div>
+        {% endif %}
+      </section>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+(function () {
+  var cal = document.querySelector("[data-cal]");
+  if (!cal) return;
+  cal.addEventListener("click", function (e) {
+    var a = e.target.closest("a[data-day]");
+    if (!a) return;
+    e.preventDefault();
+    var d = a.dataset.day;
+    cal.querySelectorAll(".day.sel").forEach(function (x) { x.classList.remove("sel"); });
+    a.classList.add("sel");
+    document.querySelectorAll("[data-detail]").forEach(function (p) { p.hidden = p.dataset.detail !== d; });
+    try { history.replaceState(null, "", a.getAttribute("href").split("#")[0]); } catch (err) {}
+    var box = document.getElementById("day-detail");
+    if (box.getBoundingClientRect().top > window.innerHeight - 120 || box.getBoundingClientRect().top < 0) {
+      box.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+})();
+</script>
+{% endblock %}

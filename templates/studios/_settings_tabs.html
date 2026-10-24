@@ -1,0 +1,8 @@
+<div class="tabs mb settings-tabs" role="tablist" aria-label="Studio settings">
+  <a href="{% url 'setup_studio' %}" class="{% if tab == 'details' %}active{% endif %}">Studio details</a>
+  <a href="{% url 'setup_resources' %}" class="{% if tab == 'resources' %}active{% endif %}">Resources &amp; equipment</a>
+  <a href="{% url 'package_list' %}" class="{% if tab == 'packages' %}active{% endif %}">Packages</a>
+  <a href="{% url 'staff_list' %}" class="{% if tab == 'staff' %}active{% endif %}">Staff logins</a>
+  <a href="{% url 'backup' %}" class="{% if tab == 'backup' %}active{% endif %}">Backup &amp; export</a>
+  <a href="{% url 'audit_log' %}" class="{% if tab == 'audit' %}active{% endif %}">Activity log</a>
+</div>

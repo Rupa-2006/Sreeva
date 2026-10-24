@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load static studio_tags %}
+{% block title %}{% if creating %}New booking{% else %}Edit booking{% endif %}{% endblock %}
+{% block heading %}{% if creating %}New booking{% else %}Edit · {{ booking.display_title }}{% endif %}{% endblock %}
+{% block actions %}{% if not creating %}<a class="btn" href="{{ booking.get_absolute_url }}">Cancel</a>{% endif %}{% endblock %}
+
+{% block content %}
+<form method="post" novalidate data-draft data-bound="{{ form.is_bound|yesno:'1,0' }}" data-draft-add="#add-session" data-draft-total="#id_sessions-TOTAL_FORMS">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="form-errors">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+  {% if formset.non_form_errors %}<div class="form-errors">{% for e in formset.non_form_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+<div class="bf-layout">
+<div class="bf-main">
+  <nav class="bf-steps" aria-label="Steps">
+    <button type="button" data-go="1" class="on"><i>1</i>Customer</button>
+    <button type="button" data-go="2"><i>2</i>Event</button>
+    <button type="button" data-go="3"><i>3</i>Price</button>
+    <span class="bf-progress"><span></span></span>
+  </nav>
+
+  <div class="bf-step on" data-step="1">
+  <div class="section-title"><span class="step">1</span><div><h2>Customer</h2></div></div>
+  <div class="card"><div class="card-body">
+    <div class="form-grid">
+      <div>
+        {% include "_field.html" with field=form.client_phone %}
+        <div class="client-hint" id="client-hint"></div>
+      </div>
+      {% include "_field.html" with field=form.client_name %}
+    </div>
+  </div></div>
+  </div>
+
+  <div class="bf-step" data-step="2">
+  <div class="section-title"><span class="step">2</span><div><h2>Event</h2></div></div>
+  <div class="card booking-type"><div class="card-body">
+    <div class="form-grid">
+      {% include "_field.html" with field=form.event_type %}
+      {% include "_field.html" with field=form.status %}
+    </div>
+  </div></div>
+  {{ formset.management_form }}
+  <div id="sessions"
+       data-availability-url="{% url 'api_availability' %}"
+       data-client-url="{% url 'api_client_lookup' %}"
+       data-booking-id="{{ booking.pk|default:'' }}">
+    {% for sf in formset %}{% include "bookings/_session_card.html" %}{% endfor %}
+  </div>
+  <button type="button" class="btn" id="add-session">{% include "_icon.html" with name="plus" sm=1 %} Add another event date</button>
+  <div class="mt">{% include "_field.html" with field=form.allow_freelancers %}</div>
+  </div>
+
+  <div class="bf-step" data-step="3">
+
+  <div class="section-title"><span class="step">3</span><div><h2>Total</h2></div></div>
+  <div class="card"><div class="card-body">
+    <div class="total-line"><span>Total</span><b id="booking-total">₹0</b></div>
+    <div class="form-grid mt">
+      {% include "_field.html" with field=form.advance_mode %}
+      {% include "_field.html" with field=form.delivery_due %}
+    </div>
+    <details class="fold mt"{% if form.title.value or form.notes.value or form.title.errors or form.notes.errors %} open{% endif %}>
+      <summary>+ Booking name & notes</summary>
+      <div class="form-grid mt">
+        {% include "_field.html" with field=form.title %}
+        {% include "_field.html" with field=form.notes cls="full" %}
+      </div>
+    </details>
+  </div></div>
+  </div>
+
+  <div class="sticky-actions">
+    <div class="sa-total"><small>Total</small><b data-slip-total>₹0</b></div>
+    {% if not creating %}<a class="btn" href="{{ booking.get_absolute_url }}">Cancel</a>{% endif %}
+    <button class="btn bf-back" type="button" data-step-move="-1" aria-label="Back">{% include "_icon.html" with name="chevron-left" sm=1 %}</button>
+    <button class="btn primary bf-next" type="button" data-step-move="1">Next {% include "_icon.html" with name="chevron-right" sm=1 %}</button>
+    <button class="btn primary bf-save" type="submit">{% include "_icon.html" with name="check" sm=1 %} Save booking</button>
+  </div>
+</div>
+
+<aside class="bf-slip" aria-label="Booking summary">
+  <div class="slip">
+    <div class="slip-head">
+      <span class="slip-kicker">{% if creating %}New booking{% else %}Editing booking #{{ booking.pk }}{% endif %}</span>
+      <b data-slip="customer">Customer name</b>
+      <small data-slip="phone">Phone number</small>
+    </div>
+    <div class="slip-tags"><span data-slip="type"></span><span data-slip="status" class="slip-status"></span></div>
+    <ol class="slip-events" data-slip="events"></ol>
+    <div class="slip-total"><span>Total</span><b data-slip-total>₹0</b></div>
+    <button class="btn primary block" type="submit">{% include "_icon.html" with name="check" sm=1 %} Save booking</button>
+    {% if not creating %}<a class="btn block ghost" href="{{ booking.get_absolute_url }}">Cancel</a>{% endif %}
+  </div>
+</aside>
+</div>
+</form>
+
+<template id="session-template">{% with sf=formset.empty_form %}{% include "bookings/_session_card.html" %}{% endwith %}</template>
+{% endblock %}
+
+{% block scripts %}{{ package_data|json_script:"package-data" }}{{ resource_rates|json_script:"resource-rates" }}<script src="{% vstatic 'js/booking_form.js' %}"></script><script src="{% vstatic 'js/booking_style.js' %}"></script><script src="{% vstatic 'js/booking_steps.js' %}"></script>{% endblock %}

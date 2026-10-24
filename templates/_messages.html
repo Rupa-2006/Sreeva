@@ -1,0 +1,13 @@
+{% comment %}
+  quiet=1 (inside the app): no "saved" pop-ups — the page itself shows the result.
+  Only problems (errors / warnings) are shown, as a line at the top of the page.
+{% endcomment %}
+{% if messages %}
+<div class="messages" role="status">
+  {% for m in messages %}
+    {% if not quiet or "error" in m.tags or "warning" in m.tags %}
+    <div class="msg {{ m.tags }}"><span>{{ m }}</span><button class="close" type="button" aria-label="Dismiss">×</button></div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}

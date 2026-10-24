@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}{{ booking.display_title }}{% endblock %}
+{% block topbar_class %} topbar-detail{% endblock %}
+{% block heading %}{% endblock %}
+
+{% block content %}
+{# ---------- Header ---------- #}
+<section class="bd-head">
+  <span class="bd-avatar" aria-hidden="true">{% include "_icon.html" with name="camera" %}</span>
+  <div class="bd-title">
+    <h1>{{ booking.display_title }}</h1>
+    <p>#{{ booking.pk }} · {{ booking.get_event_type_display }}</p>
+  </div>
+  <div class="bd-actions">
+    <a class="icon-btn" href="tel:{{ booking.client.phone }}" title="Call {{ booking.client.name }}" aria-label="Call {{ booking.client.name }}">{% include "_icon.html" with name="phone" %}</a>
+    {% if is_owner and booking.status != "cancelled" %}<a class="icon-btn wa" target="_blank" rel="noopener" href="{{ booking.wa_confirmation }}" title="Send booking details on WhatsApp" aria-label="Send booking details on WhatsApp">{% include "_icon.html" with name="chat" %}</a>{% endif %}
+    {% if is_owner %}<a class="icon-btn" href="{% url 'booking_edit' booking.pk %}" title="Edit booking" aria-label="Edit booking">{% include "_icon.html" with name="edit" %}</a>{% endif %}
+  </div>
+  <div class="bd-badges">
+    <span class="badge {{ booking.status }}">{{ booking.get_status_display }}</span>
+    {% if booking.album_delivered %}<span class="badge delivered">Album delivered</span>{% endif %}
+    {% if is_owner and booking.status == "confirmed" %}{% if booking.pending %}<span class="badge due">{{ booking.pending|inr }} due</span>{% else %}<span class="badge paid-blue">Fully paid</span>{% endif %}{% endif %}
+    {% if is_owner and booking.status == "enquiry" %}
+      <form method="post" action="{% url 'booking_status' booking.pk %}">{% csrf_token %}<input type="hidden" name="status" value="confirmed"><button class="btn sm primary">{% include "_icon.html" with name="check" sm=1 %} Confirm booking</button></form>
+    {% endif %}
+  </div>
+</section>
+
+{% if just_saved %}
+<section class="send-card" data-send-card>
+  <span class="sc-ico">{% include "_icon.html" with name="check" %}</span>
+  <div class="sc-text"><b>Booking saved</b></div>
+  <a class="btn wa" target="_blank" rel="noopener" href="{{ booking.wa_confirmation }}" data-send-done>{% include "_icon.html" with name="chat" sm=1 %} Send details</a>
+  <button type="button" class="ib-close" data-send-close aria-label="Close">×</button>
+</section>
+{% endif %}
+
+<div class="bd-grid">
+  <div class="bd-col">
+    {# ---------- One card per event date ---------- #}
+    {% for s in sessions %}
+    <section class="card bd-card">
+      <div class="bd-card-head"><span class="h-ico">{% include "_icon.html" with name="calendar" sm=1 %}</span><h2>Event date</h2>{% if s.date == today %}<span class="badge work">Today</span>{% endif %}</div>
+      <div class="bd-event">
+        <div class="bd-event-info">
+          <b>{{ s.name }}</b>
+          <span>{% include "_icon.html" with name="clock" sm=1 %} {{ s.date|date:"D, d M Y" }} · {{ s.time_label }}</span>
+          <span>{% include "_icon.html" with name="pin" sm=1 %} {{ s.place }}</span>
+        </div>
+        <a class="map-tile" href="{{ s.maps_url }}" target="_blank" rel="noopener" aria-label="Open {{ s.place }} in Google Maps">
+          <span class="map-art" aria-hidden="true">{% include "_icon.html" with name="pin" %}</span>
+          <small>Show map</small>
+        </a>
+      </div>
+      <div class="bd-btns">
+        <a class="btn soft" target="_blank" rel="noopener" href="{{ s.maps_url }}">{% include "_icon.html" with name="pin" sm=1 %} Directions</a>
+        {% if is_owner and booking.status == "confirmed" and s.date >= today %}
+          <a class="btn soft wa-soft" target="_blank" rel="noopener" href="{{ s.wa_reminder }}">{% include "_icon.html" with name="bell" sm=1 %} Remind</a>
+        {% endif %}
+      </div>
+
+      <div class="bd-sub">
+        <div class="bd-sub-head"><span class="h-ico">{% include "_icon.html" with name="users" sm=1 %}</span><h3>Team</h3></div>
+        <ul class="bd-items">
+          {% for n in s.resource_needs.all %}
+            <li>{% if n.resource_type.category == "people" %}{% include "_icon.html" with name="camera" sm=1 %}{% else %}{% include "_icon.html" with name="box" sm=1 %}{% endif %}
+              {{ n.quantity }} × {{ n.resource_type.name }}{% if n.freelancers %} <span class="chip hired">{{ n.freelancers }} hired</span>{% endif %}</li>
+          {% empty %}<li class="muted">No items</li>{% endfor %}
+        </ul>
+        {% with team=s.assigned_staff.all %}
+        <div class="bd-team{% if not team %} empty{% endif %}">
+          {% if team %}
+            <span class="team">{% for u in team %}<i>{{ u.first_name|default:u.username|slice:":1"|upper }}</i>{% endfor %}</span>
+            <span>{% for u in team %}{{ u.first_name|default:u.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+          {% else %}
+            <span class="muted">{% include "_icon.html" with name="users" sm=1 %} No team assigned</span>
+          {% endif %}
+          {% if is_owner %}<button type="button" class="btn sm primary" data-toggle-assign="assign-{{ s.pk }}">{% if team %}Change team{% else %}Assign team for this event{% endif %}</button>{% endif %}
+        </div>
+        {% endwith %}
+        {% if is_owner %}
+        <form method="post" action="{% url 'session_assign' s.pk %}" class="assign-form" id="assign-{{ s.pk }}" hidden>
+          {% csrf_token %}
+          <div class="staff-checks">
+            {% for u in staff %}
+              <label><input type="checkbox" name="staff" value="{{ u.pk }}" {% if u in s.assigned_staff.all %}checked{% endif %}> {{ u.first_name|default:u.username }} <span class="muted">{{ u.profile.designation }}</span></label>
+            {% empty %}<span class="muted">No staff yet. <a href="{% url 'staff_list' %}">Add staff logins</a>.</span>{% endfor %}
+          </div>
+          <label class="check" style="font-size:.85rem;margin-bottom:10px"><input type="checkbox" name="force" value="1"> Assign even if they're busy elsewhere</label>
+          <button class="btn sm primary">Save team</button>
+        </form>
+        {% endif %}
+      </div>
+    </section>
+    {% endfor %}
+
+    {# ---------- Album ---------- #}
+    {% if booking.status == "confirmed" %}
+    <section class="card bd-card">
+      <div class="album-line">
+        {% if booking.album_delivered %}
+          <span class="h-ico green">{% include "_icon.html" with name="check" sm=1 %}</span>
+          <div><b>Album delivered</b></div>
+          <form method="post" action="{% url 'booking_status' booking.pk %}">{% csrf_token %}<input type="hidden" name="work_status" value="upcoming"><button class="btn sm ghost">Undo</button></form>
+        {% else %}
+          <span class="h-ico amber">{% include "_icon.html" with name="box" sm=1 %}</span>
+          <div>
+            <b>Album / video delivery</b>
+            <small>{% if booking.delivery_due %}Due {{ booking.delivery_due|date:"d M Y" }}{% if booking.delivery_due < today %} <span class="badge overdue">Late</span>{% endif %}{% else %}No delivery date{% endif %}</small>
+          </div>
+          <form method="post" action="{% url 'booking_status' booking.pk %}">{% csrf_token %}<input type="hidden" name="work_status" value="delivered"><button class="btn sm primary">{% include "_icon.html" with name="check" sm=1 %} Delivered</button></form>
+        {% endif %}
+      </div>
+      {% if is_owner and not booking.album_delivered %}<a class="btn soft wa-soft mt" target="_blank" rel="noopener" href="{{ booking.wa_ready }}">{% include "_icon.html" with name="chat" sm=1 %} Tell customer it's ready</a>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="bd-col">
+    {# ---------- Customer ---------- #}
+    <section class="card bd-card">
+      <div class="bd-card-head"><span class="h-ico">{% include "_icon.html" with name="user" sm=1 %}</span><h2>Customer</h2><a class="btn sm" href="{{ booking.client.get_absolute_url }}">Profile</a></div>
+      <div class="bd-customer">
+        <span class="bd-initial" aria-hidden="true">{{ booking.client.name|slice:":1"|upper }}</span>
+        <div>
+          <b>{{ booking.client.name }}</b>
+          <a href="tel:{{ booking.client.phone }}">{% include "_icon.html" with name="phone" sm=1 %} {{ booking.client.phone|phone }}</a>
+        </div>
+      </div>
+      {% if booking.notes %}<p class="bd-notes">{{ booking.notes }}</p>{% endif %}
+    </section>
+
+    {# ---------- Payments ---------- #}
+    {% if is_owner %}
+    <section class="card bd-card">
+      <div class="bd-card-head"><span class="h-ico">{% include "_icon.html" with name="wallet" sm=1 %}</span><h2>Payments</h2>
+        {% if booking.pending and sessions|length > 1 %}<a class="btn sm wa" target="_blank" rel="noopener" href="{{ booking.wa_payment_reminder }}">{% include "_icon.html" with name="chat" sm=1 %} Ask for balance</a>{% endif %}
+      </div>
+      {% for s in sessions %}
+      <div class="bd-money">
+        <div class="bd-money-top">
+          <div><b>{{ s.name }}</b><small>{{ s.date|date:"D, d M Y" }} · {{ s.time_label }}</small></div>
+          {% if s.amount and not s.pending_total %}<span class="badge paid">Paid</span>{% elif not s.amount %}<span class="badge enquiry">No price</span>{% endif %}
+        </div>
+        <div class="bd-tiles">
+          <div><small>Price</small><b>{{ s.amount|inr }}</b></div>
+          <div class="paid"><small>Paid</small><b>{{ s.paid_total|inr }}</b></div>
+          <div class="{% if s.pending_total %}due{% else %}clear{% endif %}"><small>Pending</small><b>{{ s.pending_total|inr }}</b></div>
+        </div>
+        {% if s.package or s.charges %}
+        <p class="bd-pkg">{% if s.package %}Package: <b>{{ s.package.name }}</b>{% endif %}{% for label, amt in s.charges %}{% if forloop.first and s.package %} · {% endif %}{{ label }} {{ amt|inr_signed }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+        {% endif %}
+        {% if s.pending_total and booking.status != "cancelled" %}
+        <div class="bd-btns">
+          <a class="btn sm primary" href="{% url 'payment_add' booking.pk %}?event={{ s.pk }}">{% include "_icon.html" with name="plus" sm=1 %} Record payment</a>
+          <a class="btn sm wa" target="_blank" rel="noopener" href="{{ s.wa_payment_reminder }}">{% include "_icon.html" with name="chat" sm=1 %} Remind</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% if sessions|length > 1 %}
+      <div class="bd-sum"><span>All events</span><span><b>{{ booking.total_amount|inr }}</b> · paid <b class="green">{{ booking.paid|inr }}</b> · pending <b class="{% if booking.pending %}red{% endif %}">{{ booking.pending|inr }}</b></span></div>
+      {% endif %}
+      <details class="bd-history">
+        <summary>{% include "_icon.html" with name="clock" sm=1 %} Payment history ({{ payments|length }}) <span class="chev" aria-hidden="true">›</span></summary>
+        <ul class="list-plain">
+          {% for p in payments %}
+            <li class="pay-row">
+              <div>
+                <div class="amt">{{ p.amount|inr }} <span class="chip">{{ p.session.name|default:"—" }}</span></div>
+                <div class="muted" style="font-size:.8rem">{{ p.date|date:"d M Y" }} · {{ p.get_mode_display }}{% if p.note %} · {{ p.note }}{% endif %}</div>
+              </div>
+              <div class="btn-row" style="flex-wrap:nowrap">
+                <a class="btn sm" href="{% url 'payment_edit' p.pk %}" title="Edit this payment">{% include "_icon.html" with name="edit" sm=1 %}</a>
+                <a class="btn sm" href="{% url 'payment_receipt' p.pk %}" target="_blank" title="Receipt">{% include "_icon.html" with name="printer" sm=1 %}</a>
+                <form method="post" action="{% url 'payment_delete' p.pk %}" data-confirm="Delete payment of {{ p.amount|inr }}?">{% csrf_token %}<button class="btn sm danger" title="Delete">{% include "_icon.html" with name="trash" sm=1 %}</button></form>
+              </div>
+            </li>
+          {% empty %}<li class="muted" style="font-size:.9rem">No payments yet.</li>{% endfor %}
+        </ul>
+      </details>
+      {% if receipt_id %}
+        <a class="btn block mt" target="_blank" href="{% url 'payment_receipt' receipt_id %}">{% include "_icon.html" with name="printer" sm=1 %} Print / share receipt</a>
+      {% endif %}
+    </section>
+
+    {# ---------- More actions ---------- #}
+    <section class="card bd-card">
+      <div class="bd-card-head"><h2>More actions</h2></div>
+      <div class="bd-more">
+        {% if booking.status != "confirmed" %}
+          <form method="post" action="{% url 'booking_status' booking.pk %}">{% csrf_token %}<input type="hidden" name="status" value="confirmed"><button class="btn soft">{% include "_icon.html" with name="check" sm=1 %} Confirm</button></form>
+        {% endif %}
+        {% if booking.status != "enquiry" %}
+          <form method="post" action="{% url 'booking_status' booking.pk %}">{% csrf_token %}<input type="hidden" name="status" value="enquiry"><button class="btn soft">{% include "_icon.html" with name="chevron-left" sm=1 %} Move to enquiry</button></form>
+        {% endif %}
+        {% if booking.status != "cancelled" %}
+          <form method="post" action="{% url 'booking_status' booking.pk %}" data-confirm="Cancel this booking?">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><button class="btn soft-red">{% include "_icon.html" with name="alert" sm=1 %} Cancel</button></form>
+        {% endif %}
+        <form method="post" action="{% url 'booking_delete' booking.pk %}" data-confirm="Permanently delete this booking?">{% csrf_token %}<button class="btn soft-red">{% include "_icon.html" with name="trash" sm=1 %} Delete</button></form>
+      </div>
+      <small class="bd-created">Created {{ booking.created_at|date:"d M Y, h:i A" }}{% if booking.created_by %} by {{ booking.created_by.first_name|default:booking.created_by.username }}{% endif %}</small>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("click", function (e) {
+  var b = e.target.closest("[data-toggle-assign]");
+  if (!b) return;
+  var f = document.getElementById(b.dataset.toggleAssign);
+  if (f) { f.hidden = !f.hidden; if (!f.hidden) f.querySelector("input") && f.querySelector("input").focus(); }
+});
+</script>
+{% endblock %}

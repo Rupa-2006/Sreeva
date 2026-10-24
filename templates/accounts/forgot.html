@@ -1,0 +1,15 @@
+{% extends "auth_base.html" %}
+{% block title %}Forgot username or password{% endblock %}
+{% block card %}
+  <h2>Forgot your login?</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-errors">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+    {% include "_field.html" with field=form.email %}
+    <button class="btn primary block" type="submit">Send recovery email</button>
+  </form>
+  <div class="hint-box mt">
+    <b>Staff member?</b> Ask the studio owner. They can reset your password from <i>Staff logins</i>.
+  </div>
+  <p class="alt"><a href="{% url 'login' %}">← Back to log in</a></p>
+{% endblock %}

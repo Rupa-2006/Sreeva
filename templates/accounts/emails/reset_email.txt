@@ -1,0 +1,16 @@
+{% autoescape off %}Hello {{ user.first_name|default:user.username }},
+
+Someone (hopefully you) asked to recover a Sreeva login for this email address.
+
+Your username is:  {{ user.get_username }}
+
+If you only forgot your username, you can log in now:
+{{ protocol }}://{{ domain }}{% url 'login' %}
+
+To set a new password, open this link (it works once and expires in 3 days):
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+
+If you didn't ask for this, ignore this email - your password has not changed.
+
+- Sreeva
+{% endautoescape %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block heading %}{{ client.name }}{% endblock %}
+{% block subtitle %}<div class="subtitle"><a href="tel:{{ client.phone }}">{{ client.phone|phone }}</a>{% if client.address %} · {{ client.address }}{% endif %}</div>{% endblock %}
+{% block actions %}
+  <a class="btn" href="tel:{{ client.phone }}">{% include "_icon.html" with name="phone" sm=1 %} Call</a>
+  {% if is_owner %}<a class="btn primary" href="{% url 'booking_new' %}">{% include "_icon.html" with name="plus" sm=1 %} New booking</a>{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Bookings</h2><span class="count">{{ bookings|length }}</span></div>
+      <div class="table-wrap">
+        <table class="table stack">
+          <thead><tr><th>Date</th><th>Event</th><th>Status</th>{% if is_owner %}<th class="num">Pending</th>{% endif %}</tr></thead>
+          <tbody>
+          {% for b in bookings %}
+            <tr class="rowlink" data-href="{{ b.get_absolute_url }}">
+              <td data-label="Date">{{ b.first_date|date:"d M Y"|default:"—" }}</td>
+              <td data-label="Event"><a href="{{ b.get_absolute_url }}">{{ b.title|default:b.get_event_type_display }}</a></td>
+              <td data-label="Status"><span class="badge {{ b.status }}">{{ b.get_status_display }}</span>{% if b.album_delivered %} <span class="badge delivered">Album delivered</span>{% endif %}</td>
+              {% if is_owner %}<td data-label="Pending" class="num {% if b.pending_total > 0 %}red strong{% endif %}">{{ b.pending_total|inr }}</td>{% endif %}
+            </tr>
+          {% empty %}<tr><td colspan="4"><div class="empty">No bookings.</div></td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <div>
+    {% if is_owner %}
+    <section class="card">
+      <div class="money-box" style="grid-template-columns:1fr 1fr;border:0">
+        <div><div class="label">Total business</div><div class="amt">{{ totals.business|default:0|inr }}</div></div>
+        <div><div class="label">Pending</div><div class="amt red">{{ totals.pending|default:0|inr }}</div></div>
+      </div>
+    </section>
+    <details class="card edit-fold"{% if form.errors %} open{% endif %}>
+      <summary>{% include "_icon.html" with name="edit" sm=1 %} Edit customer details</summary>
+      <div class="card-body">
+        <form method="post" novalidate data-draft data-bound="{{ form.is_bound|yesno:'1,0' }}">{% csrf_token %}
+          <div class="form-grid" style="grid-template-columns:1fr">
+            {% include "_field.html" with field=form.name %}
+            {% include "_field.html" with field=form.phone %}
+            {% include "_field.html" with field=form.alt_phone %}
+            {% include "_field.html" with field=form.address %}
+            {% include "_field.html" with field=form.notes %}
+          </div>
+          <button class="btn primary mt">Save</button>
+        </form>
+      </div>
+    </details>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

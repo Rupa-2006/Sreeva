@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block heading %}Notifications{% endblock %}
+{% block subtitle %}<div class="subtitle">{% if is_owner %}Shoots, payments, deliveries and enquiries that need you. They clear themselves once the work is done.{% else %}Your shoots: where and when.{% endif %}</div>{% endblock %}
+
+{% block content %}
+<div class="alert-setup card mb" id="alert-setup" hidden>
+  <div class="card-body row-between">
+    <div>
+      <b>Get a pop-up on this computer</b>
+      <p class="muted" id="alert-text">A notification appears even when you're on another window, as long as Sreeva is open in the browser.</p>
+    </div>
+    <button type="button" class="btn primary" id="alert-on">{% include "_icon.html" with name="bell" sm=1 %} Turn on pop-ups</button>
+  </div>
+</div>
+
+{% if open_items %}
+<div class="notif-list">
+  {% for n in open_items %}
+  <article class="notif k-{{ n.kind }}{% if n.urgent %} urgent{% endif %}{% if n.pk in new_ids %} new{% endif %}">
+    <div class="notif-icon" aria-hidden="true">{% if n.kind == "payment_due" or n.kind == "no_advance" %}₹{% elif n.kind == "delivery_soon" or n.kind == "delivery_late" %}{% include "_icon.html" with name="box" %}{% elif n.kind == "enquiry" %}{% include "_icon.html" with name="chat" %}{% elif n.kind == "no_team" %}{% include "_icon.html" with name="users" %}{% else %}{% include "_icon.html" with name="camera" %}{% endif %}</div>
+    <div class="notif-main">
+      <div class="notif-top">
+        <span class="notif-kind">{{ n.get_kind_display }}</span>
+        {% if n.urgent %}<span class="badge overdue">Urgent</span>{% endif %}
+        {% if n.pk in new_ids %}<span class="badge work">New</span>{% endif %}
+      </div>
+      <h3>{{ n.title }}</h3>
+      {% if n.body %}<p>{{ n.body }}</p>{% endif %}
+      <div class="notif-actions">
+        {% if n.action_url %}<a class="btn sm{% if n.is_whatsapp %} wa{% else %} primary{% endif %}" href="{{ n.action_url }}" target="_blank" rel="noopener"{% if n.is_whatsapp %} data-done-on-click{% endif %}>{% if n.is_whatsapp %}{% include "_icon.html" with name="chat" sm=1 %}{% else %}{% include "_icon.html" with name="pin" sm=1 %}{% endif %} {{ n.action_label }}</a>{% endif %}
+        {% if n.url %}<a class="btn sm" href="{{ n.url }}">{{ n.url_label|default:"Open" }}</a>{% endif %}
+        <form method="post" action="{% url 'notification_done' n.pk %}" class="done-form">{% csrf_token %}
+          <button class="btn sm ghost" type="submit">{% include "_icon.html" with name="check" sm=1 %} Done</button>
+        </form>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">{% include "_empty.html" with icon="bell" title="All clear 🎉" text="Nothing needs your attention right now. New reminders show up here automatically." %}</div>
+{% endif %}
+
+{% if done_items %}
+<h2 class="section-h">Done in the last 7 days</h2>
+<div class="notif-list done">
+  {% for n in done_items %}
+  <article class="notif done">
+    <div class="notif-icon" aria-hidden="true">{% include "_icon.html" with name="check" %}</div>
+    <div class="notif-main">
+      <h3>{{ n.title }}</h3>
+      <p class="muted">{% if n.closed_by_system %}Sorted automatically{% else %}Marked done{% endif %} · {{ n.done_at|timesince }} ago</p>
+    </div>
+    {% if not n.closed_by_system %}
+    <form method="post" action="{% url 'notification_done' n.pk %}">{% csrf_token %}<input type="hidden" name="undo" value="1">
+      <button class="btn sm ghost" type="submit">Undo</button></form>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
