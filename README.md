@@ -5,7 +5,8 @@ bookings, team and equipment availability, payments, album delivery and staff ac
 
 Built for my father's photography studio.
 
-🔗 **Live:** https://sreevastudio.pythonanywhere.com
+🔗 **Live:** https://sreevastudio.pythonanywhere.com — tap **“Try the demo”** to explore a sample studio, no sign-up needed
+(or log in with `demo` / `Demo@2026`). The demo studio is separate from real studios and refreshes every day.
 
 ![Sreeva dashboard](docs/screenshots/desktop-dashboard.png)
 
@@ -45,7 +46,7 @@ Built for my father's photography studio.
 
 ## Tech stack
 
-**Backend:** Python 3.12, Django 5.2, SQLite · **Frontend:** Django templates, vanilla JavaScript, CSS (no framework), PWA service worker · **Hosting:** PythonAnywhere with WhiteNoise · **Tests:** 74 Django tests
+**Backend:** Python 3.12, Django 5.2, SQLite · **Frontend:** Django templates, vanilla JavaScript, CSS (no framework), PWA service worker · **Hosting:** PythonAnywhere with WhiteNoise · **Tests:** 75 Django tests
 
 ## Run it locally
 

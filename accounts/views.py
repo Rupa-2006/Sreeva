@@ -1,3 +1,4 @@
+import os
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
@@ -29,10 +30,36 @@ def _save_new_user(form):
         return None
 
 
+def _demo_user():
+    from bookings.management.commands.setup_demo import DEMO_USERNAME
+    return User.objects.filter(username=DEMO_USERNAME, is_active=True, profile__studio__isnull=False).first()
+
+
 def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
-    return render(request, "home.html")
+    return render(request, "home.html", {"demo_ready": _demo_user() is not None})
+
+
+@require_POST
+def try_demo(request):
+    """One tap from the welcome page: log in to the sample "Demo Studio".
+    The demo studio is separate from every real studio and is refreshed daily."""
+    user = _demo_user()
+    if user is None:
+        return redirect("home")
+    # visitors may have changed things: start each day with fresh sample data
+    from datetime import timedelta
+    from django.utils import timezone
+    if timezone.now() - user.date_joined > timedelta(hours=24):
+        from django.core.management import call_command
+        call_command("setup_demo", reset=True, stdout=open(os.devnull, "w"))
+        user = _demo_user()
+    if request.user.is_authenticated:
+        logout(request)
+    login(request, user, backend="accounts.backends.CaseInsensitiveBackend")
+    log(request, "Demo opened", user=user)
+    return redirect("dashboard")
 
 
 class RateLimitedLoginView(LoginView):

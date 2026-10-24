@@ -1269,3 +1269,7 @@ div.empty[hidden] { display: none; }
 
 .lp-chip { top: auto; right: auto; left: -6px; bottom: 8px; }
 .lp-chip { position: static; justify-self: start; margin: -2px 0 0 4px; transform: rotate(-1deg); }
+.land-demo { margin: 12px 0 0; }
+.land-demo button { font: inherit; display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; padding: 4px 0; color: #e0e7ff; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.land-demo button:hover { color: #fff; }
+@media (max-width: 860px) { .land-demo { text-align: center; } .land-demo button { justify-content: center; } }

@@ -1,3 +1,4 @@
+import os
 from datetime import date, time, timedelta
 from decimal import Decimal
 
@@ -984,3 +985,26 @@ class SignupSwitchTests(TestCase):
             self.assertRedirects(r, reverse("login"))
             self.assertNotContains(self.client.get(reverse("login")), "Create an account")
         self.assertContains(self.client.get(reverse("login")), "Create an account")
+
+
+class DemoStudioTests(TestCase):
+    def test_demo_is_separate_and_one_tap(self):
+        from django.core.management import call_command
+        from studios.models import Studio
+        real = User.objects.create_user("realowner", password="Strong@pass9")
+        Studio.objects.create(owner=real, name="Real Studio", phone="9848012345")
+        self.assertNotContains(self.client.get(reverse("home")), "Try the demo")
+        call_command("setup_demo", stdout=open(os.devnull, "w"))
+        self.assertContains(self.client.get(reverse("home")), "Try the demo")
+        r = self.client.post(reverse("try_demo"))
+        self.assertRedirects(r, reverse("dashboard"))
+        page = self.client.get(reverse("dashboard"))
+        self.assertContains(page, "Demo Studio")
+        self.assertNotContains(page, "Real Studio")
+        # an old demo is refreshed; real studios are never touched
+        User.objects.filter(username="demo").update(date_joined=timezone.now() - timedelta(days=2))
+        self.client.logout()
+        self.client.post(reverse("try_demo"))
+        self.assertTrue(Studio.objects.filter(name="Real Studio").exists())
+        self.assertEqual(Studio.objects.filter(name="Demo Studio").count(), 1)
+        self.assertGreater(User.objects.get(username="demo").date_joined, timezone.now() - timedelta(hours=1))
