@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_class %} topbar-dash{% endblock %}
+{% block heading %}{% endblock %}
+
+{% block content %}
+<section class="greet">
+  <h1>{{ greeting }}, {{ user.first_name|default:user.username }} 👋</h1>
+  <p>{{ today|date:"l, d F" }}</p>
+</section>
+
+<nav class="tiles" aria-label="What do you want to do?">
+  {% if is_owner %}
+  <a class="tile t1" href="{% url 'booking_new' %}"><span class="t-ico">{% include "_icon.html" with name="plus" %}</span><b>New booking</b></a>
+  {% else %}
+  <a class="tile t1" href="{% url 'booking_list' %}"><span class="t-ico">{% include "_icon.html" with name="list" %}</span><b>Bookings</b></a>
+  {% endif %}
+  <a class="tile t2" href="#date-check" data-open-check><span class="t-ico">{% include "_icon.html" with name="calendar" %}</span><b>Is a date free?</b></a>
+  {% if is_owner %}
+  <a class="tile t3" href="{% url 'payments' %}"><span class="t-ico">{% include "_icon.html" with name="wallet" %}</span><b>Record payment</b>{% if pending_total %}<span class="t-amt">{{ pending_total|inr }}</span>{% endif %}</a>
+  {% else %}
+  <a class="tile t3" href="{% url 'notifications' %}"><span class="t-ico">{% include "_icon.html" with name="bell" %}</span><b>Notifications</b></a>
+  {% endif %}
+  <a class="tile t4" href="{% url 'calendar' %}"><span class="t-ico">{% include "_icon.html" with name="clock" %}</span><b>Calendar</b></a>
+</nav>
+
+<section class="card dc-bar dc-card" id="date-check" data-url="{% url 'api_availability' %}" data-book="{% if is_owner %}{% url 'booking_new' %}{% endif %}">
+  <div class="dc-form">
+    <label class="dc-title" for="dc-date">{% include "_icon.html" with name="calendar" %} <span>Is a date free?</span></label>
+    <input type="date" id="dc-date" class="input" min="{{ today|date:'Y-m-d' }}">
+    <select id="dc-slot" class="input" aria-label="Time">
+      <option value="full">Full day</option><option value="morning">Morning</option><option value="evening">Evening</option>
+    </select>
+  </div>
+  <div class="dc-result" id="dc-result" aria-live="polite"></div>
+</section>
+
+
+
+<div class="dash">
+  <div class="dash-main">
+    {# ---------- The day: today / tomorrow ---------- #}
+    <section class="card day-card" id="day" data-order="1">
+      <div class="day-tabs" role="tablist">
+        <button type="button" role="tab" class="on" data-day="today" aria-selected="true">Today <b>{{ today_sessions|length }}</b></button>
+        <button type="button" role="tab" data-day="tomorrow" aria-selected="false">Tomorrow <b>{{ tomorrow_sessions|length }}</b></button>
+      </div>
+      <div class="day-list" data-list="today">
+        {% for s in today_sessions %}{% include "bookings/_day_shoot.html" with when="today" %}
+        {% empty %}<p class="day-empty">No shoots today.</p>{% endfor %}
+      </div>
+      <div class="day-list" data-list="tomorrow">
+        {% for s in tomorrow_sessions %}{% include "bookings/_day_shoot.html" with when="tomorrow" %}
+        {% empty %}<p class="day-empty">Nothing booked for tomorrow.</p>{% endfor %}
+      </div>
+    </section>
+
+    {% if not is_owner %}
+    <section class="card" data-order="2">
+      <div class="card-head"><h2><span class="h-ico">{% include "_icon.html" with name="camera" sm=1 %}</span>My shoots</h2></div>
+      <div class="rows">
+        {% for s in my_sessions %}{% include "bookings/_date_row.html" %}
+        {% empty %}<p class="day-empty">You're not on any upcoming shoot.</p>{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="card" data-order="3">
+      <div class="card-head"><h2><span class="h-ico">{% include "_icon.html" with name="calendar" sm=1 %}</span>Coming up</h2><a href="{% url 'calendar' %}" class="btn sm">Calendar</a></div>
+      <div class="rows">
+        {% for s in upcoming_sessions %}{% include "bookings/_date_row.html" %}
+        {% empty %}<p class="day-empty">Nothing else in the next 30 days.{% if is_owner %} <a href="{% url 'booking_new' %}">Add a booking</a>{% endif %}</p>{% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="dash-side">
+    {% if is_owner %}
+    <section class="card money-card" data-order="2">
+      <a class="money-top" href="{% url 'payments' %}">
+        <span><span class="h-ico red">{% include "_icon.html" with name="wallet" sm=1 %}</span>To collect</span>
+        <strong>{{ pending_total|inr }}</strong>
+        <small>{{ collected_month|inr }} received in {{ today|date:"F" }}</small>
+      </a>
+      <div class="rows">
+        {% for s in dues %}
+        <a class="row" href="{% url 'payment_add' s.booking_id %}?event={{ s.pk }}" title="Record a payment for {{ s.name }}">
+          <span class="row-main"><b>{{ s.booking.client.name }}</b><small>{{ s.name }}, {{ s.date|date:"d M" }}</small></span>
+          <span class="row-amt">{{ s.pending_total|inr }}</span>
+        </a>
+        {% empty %}<p class="day-empty">Everything is paid. 🎉</p>{% endfor %}
+      </div>
+      {% if dues_count > 5 %}<a class="card-more" href="{% url 'payments' %}">All {{ dues_count }} to collect</a>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card" data-order="4">
+      <div class="card-head"><h2><span class="h-ico amber">{% include "_icon.html" with name="box" sm=1 %}</span>Albums to deliver</h2>
+        <span class="count{% if overdue_count %} late{% endif %}">{% if overdue_count %}{{ overdue_count }} late{% else %}{{ pending_deliveries_count }}{% endif %}</span></div>
+      <div class="rows">
+        {% for b in pending_deliveries|slice:":5" %}
+        <div class="row">
+          <a class="row-main" href="{{ b.get_absolute_url }}"><b>{{ b.display_title }}</b><small>{% if b.delivery_due %}Due {{ b.delivery_due|date:"d M" }}{% else %}Shot {{ b.last_date|date:"d M" }}{% endif %}{% if b.delivery_due and b.delivery_due < today %} <span class="badge overdue">Late</span>{% endif %}</small></a>
+          <form method="post" action="{% url 'booking_status' b.pk %}">{% csrf_token %}
+            <input type="hidden" name="work_status" value="delivered"><input type="hidden" name="next" value="{% url 'dashboard' %}">
+            <button class="btn sm" title="Mark the album for {{ b.display_title }} as delivered">{% include "_icon.html" with name="check" sm=1 %} Delivered</button>
+          </form>
+        </div>
+        {% empty %}<p class="day-empty">All albums delivered.</p>{% endfor %}
+      </div>
+      {% if pending_deliveries_count > 5 %}<a class="card-more" href="{% url 'booking_list' %}?when=past">All {{ pending_deliveries_count }} albums</a>{% endif %}
+    </section>
+
+    {% if enquiries %}
+    <section class="card" data-order="5">
+      <div class="card-head"><h2><span class="h-ico violet">{% include "_icon.html" with name="chat" sm=1 %}</span>Enquiries</h2><span class="count">{{ enquiries|length }}</span></div>
+      <div class="rows">
+        {% for b in enquiries %}
+        <div class="row">
+          <a class="row-main" href="{{ b.get_absolute_url }}"><b>{{ b.client.name }}</b><small>{{ b.get_event_type_display }}, {{ b.first_date|date:"d M" }}</small></a>
+          <a class="icon-btn" href="tel:{{ b.client.phone }}" aria-label="Call {{ b.client.name }}">{% include "_icon.html" with name="phone" sm=1 %}</a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  // Today / Tomorrow switch (without JavaScript both lists simply show)
+  var card = document.querySelector(".day-card");
+  if (card) {
+    card.classList.add("tabbed");
+    card.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-day]");
+      if (!b) return;
+      card.querySelectorAll("[data-day]").forEach(function (x) {
+        var on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-selected", on);
+      });
+      card.querySelectorAll("[data-list]").forEach(function (l) { l.hidden = l.dataset.list !== b.dataset.day; });
+    });
+    card.querySelector('[data-list="tomorrow"]').hidden = true;
+    // the "tomorrow" chip in the banner opens the Tomorrow tab
+    document.querySelectorAll("[data-show-day]").forEach(function (a) {
+      a.addEventListener("click", function () { card.querySelector('[data-day="' + a.dataset.showDay + '"]').click(); });
+    });
+  }
+})();
+(function () {
+  var check = document.getElementById("date-check");
+  if (check) {
+    check.hidden = true;   // opens from the "Is a date free?" tile
+    document.querySelectorAll("[data-open-check]").forEach(function (t) {
+      t.addEventListener("click", function (e) {
+        e.preventDefault(); check.hidden = false;
+        check.scrollIntoView({ behavior: "smooth", block: "center" });
+        var d = document.getElementById("dc-date"); if (d) { d.focus(); try { d.showPicker(); } catch (err) {} }
+      });
+    });
+  }
+})();
+(function () {
+  var box = document.getElementById("date-check");
+  if (!box) return;
+  var date = document.getElementById("dc-date"), slot = document.getElementById("dc-slot"), out = document.getElementById("dc-result");
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function run() {
+    if (!date.value) return;
+    out.innerHTML = '<span class="muted">Checking…</span>';
+    fetch(box.dataset.url + "?date=" + date.value + "&slot=" + slot.value, { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { out.textContent = d.error; return; }
+        var busyNow = d.day.filter(function (x) { return x.overlaps && x.status === "Confirmed"; }).length;
+        var allFree = d.resources.every(function (r) { return r.free === r.total; });
+        var html = '<div class="dc-verdict ' + (allFree ? "free" : "busy") + '">' +
+          (allFree ? "✓ " + esc(d.date_label) + " is free — your whole team is available"
+                   : esc(d.date_label) + ": " + busyNow + " booking" + (busyNow === 1 ? "" : "s") + " at this time — see what's left below") + "</div>";
+        html += '<div class="avail-chips">';
+        d.resources.forEach(function (r) {
+          var cls = r.free === 0 ? "none" : (r.free < r.total ? "low" : "ok");
+          html += '<span class="avail ' + cls + '">' + esc(r.name) + ": " + r.free + " of " + r.total + " free</span>";
+        });
+        html += "</div>";
+        if (d.day.length) {
+          html += '<ul class="dc-day">';
+          d.day.forEach(function (x) {
+            html += '<li' + (x.overlaps ? "" : ' class="other-time"') + '><a href="' + esc(x.url) + '"><b>' + esc(x.time) + "</b> · " +
+              esc(x.customer) + " – " + esc(x.event) + ' <span class="muted">' + esc(x.place) + "</span>" +
+              (x.status !== "Confirmed" ? ' <span class="badge enquiry">' + esc(x.status) + "</span>" : "") + "</a></li>";
+          });
+          html += "</ul>";
+        } else {
+          html += '<p class="muted" style="margin:8px 0 0;font-size:.88rem">Nothing booked on this day yet.</p>';
+        }
+        if (box.dataset.book) {
+          html += '<a class="btn primary sm mt" href="' + box.dataset.book + "?date=" + date.value + "&slot=" + slot.value + '">+ Book this date</a>';
+        }
+        out.innerHTML = html;
+      })
+      .catch(function () { out.textContent = "Couldn't check right now. Try again."; });
+  }
+  date.addEventListener("change", run);
+  slot.addEventListener("change", run);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Studio bookings made simple{% endblock %}
+{% block page %}
+<div class="land">
+  <header class="land-top">
+    <div class="brand land-brand"><span class="brand-mark"></span> Sreeva</div>
+    <a class="btn sm" href="{% url 'login' %}">Log in</a>
+  </header>
+
+  <section class="land-hero">
+    <div class="land-copy">
+      <span class="land-badge">{% include "_icon.html" with name="camera" sm=1 %} For photo &amp; video studios</span>
+      <h1>Your studio diary, <span>finally organised.</span></h1>
+      <p>Bookings, team, payments and albums — in one place, on your phone.</p>
+      <div class="land-cta">
+        {% if allow_signup %}<a class="btn primary" href="{% url 'signup' %}">Create studio account</a>{% endif %}
+        <a class="btn" href="{% url 'login' %}">Log in</a>
+      </div>
+      <small class="land-free">{% include "_icon.html" with name="check" sm=1 %} Free &nbsp;·&nbsp; {% include "_icon.html" with name="check" sm=1 %} No card needed</small>
+    </div>
+
+    <div class="land-preview" aria-hidden="true">
+      <div class="lp-card">
+        <div class="lp-head"><b>Today</b><span>2 shoots</span></div>
+        <div class="lp-row"><i class="m">Morning</i><div><b>Haldi</b><span>{% include "_icon.html" with name="pin" sm=1 %} Bride's house</span></div></div>
+        <div class="lp-row"><i class="e">Evening</i><div><b>Birthday</b><span>{% include "_icon.html" with name="pin" sm=1 %} Hotel hall</span></div></div>
+      </div>
+      <div class="lp-money">
+        <span>To collect</span><b>₹2,65,000</b>
+        <div class="lp-bar"><i></i></div>
+      </div>
+      <div class="lp-chip">{% include "_icon.html" with name="chat" sm=1 %} Reminder sent</div>
+    </div>
+  </section>
+
+  <section class="land-feats">
+    <div class="lf"><span class="lf-ico c1">{% include "_icon.html" with name="calendar" %}</span><b>No double bookings</b></div>
+    <div class="lf"><span class="lf-ico c2">{% include "_icon.html" with name="users" %}</span><b>Team &amp; equipment</b></div>
+    <div class="lf"><span class="lf-ico c3">{% include "_icon.html" with name="wallet" %}</span><b>Payments &amp; dues</b></div>
+    <div class="lf"><span class="lf-ico c4">{% include "_icon.html" with name="box" %}</span><b>Album delivery</b></div>
+    <div class="lf"><span class="lf-ico c5">{% include "_icon.html" with name="chat" %}</span><b>WhatsApp reminders</b></div>
+    <div class="lf"><span class="lf-ico c6">{% include "_icon.html" with name="phone" %}</span><b>Works like an app</b></div>
+  </section>
+
+  <footer class="land-foot">Sreeva · Made for studios</footer>
+</div>
+{% endblock page %}

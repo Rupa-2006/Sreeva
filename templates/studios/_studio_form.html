@@ -1,0 +1,17 @@
+<form method="post" novalidate data-draft data-bound="{{ form.is_bound|yesno:'1,0' }}">
+  {% csrf_token %}
+  <div class="form-grid">
+    {% include "_field.html" with field=form.name cls="full" %}
+    {% include "_field.html" with field=form.phone %}
+    {% include "_field.html" with field=form.email %}
+    {% include "_field.html" with field=form.address %}
+    {% include "_field.html" with field=form.city %}
+  </div>
+  <div class="btn-row mt">
+    {% if creating or onboarding %}
+      <button class="btn primary" type="submit">Next: Resources →</button>
+    {% else %}
+      <button class="btn primary" type="submit">{% include "_icon.html" with name="check" sm=1 %} Save details</button>
+    {% endif %}
+  </div>
+</form>

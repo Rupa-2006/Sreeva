@@ -1,0 +1,5 @@
+<a class="row date-row" href="{{ s.booking.get_absolute_url }}">
+  <span class="date-tile"><b>{{ s.date|date:"d" }}</b><small>{{ s.date|date:"M" }}</small></span>
+  <span class="row-main"><b>{{ s.booking.client.name }}</b><small>{{ s.name }}, {{ s.time_label|lower }}{% if s.booking.status == "enquiry" %} (enquiry){% endif %}</small></span>
+  {% if s.booking.status == "confirmed" and not s.assigned_staff.all %}<span class="no-team">No team</span>{% endif %}
+</a>

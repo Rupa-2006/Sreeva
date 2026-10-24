@@ -1,0 +1,19 @@
+<div class="shot{% if s.booking.status == 'enquiry' %} is-enquiry{% endif %}">
+  <a class="shot-when" href="{{ s.booking.get_absolute_url }}">{{ s.time_label }}</a>
+  <a class="shot-main" href="{{ s.booking.get_absolute_url }}">
+    <b>{{ s.booking.client.name }}</b>
+    <span class="shot-fn">{{ s.name }}{% if s.booking.status == "enquiry" %} <span class="badge enquiry">Enquiry</span>{% endif %}</span>
+    <span class="shot-place">{% include "_icon.html" with name="pin" sm=1 %} {{ s.place }}</span>
+  </a>
+  <div class="shot-side">
+    {% with team=s.assigned_staff.all %}
+      {% if team %}<span class="team" title="Team: {% for u in team %}{{ u.first_name|default:u.username }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% for u in team %}<i>{{ u.first_name|default:u.username|slice:":1"|upper }}</i>{% endfor %}</span>
+      {% elif s.booking.status == "confirmed" %}<span class="no-team">No team</span>{% endif %}
+    {% endwith %}
+    {% if when == "tomorrow" and is_owner and s.booking.status == "confirmed" %}
+      <a class="btn sm wa" target="_blank" rel="noopener" href="{{ s.wa_reminder }}" title="WhatsApp the customer a reminder">{% include "_icon.html" with name="chat" sm=1 %} Remind</a>
+    {% else %}
+      <a class="btn sm" target="_blank" rel="noopener" href="{{ s.maps_url }}">{% include "_icon.html" with name="pin" sm=1 %} Directions</a>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Payments{% endblock %}
+{% block heading %}Payments{% endblock %}
+
+{% block content %}
+<div class="pay-top">
+  <div class="pay-kpi due">
+    <span class="k-ico">{% include "_icon.html" with name="wallet" %}</span>
+    <small>To collect</small>
+    <b>{{ pending_total|inr }}</b>
+  </div>
+  <div class="pay-kpi got">
+    <span class="k-ico">{% include "_icon.html" with name="check" %}</span>
+    <small>Received in {{ today|date:"F" }}</small>
+    <b>{{ collected_month|inr }}</b>
+  </div>
+  <div class="pay-chart" aria-label="Money received in the last 6 months">
+    <small>Last 6 months</small>
+    <div class="bars">
+      {% for c in chart %}
+        <div class="bar{% if c.now %} now{% endif %}" title="{{ c.month|date:'F' }}: {{ c.amount|inr }}">
+          <em>{% if c.amount %}{{ c.amount|inr_short }}{% endif %}</em>
+          <i style="height:{% if c.amount %}{{ c.pct|default:4 }}{% else %}0{% endif %}%"></i>
+          <span>{{ c.month|date:"M" }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-head"><h2><span class="h-ico red">{% include "_icon.html" with name="wallet" sm=1 %}</span>Who owes what</h2>{% if dues %}<span class="count">{{ dues|length }}</span>{% endif %}</div>
+  {% for s in dues %}
+    <div class="due-row">
+      <a class="due-main" href="{{ s.booking.get_absolute_url }}">
+        <span class="avatar">{{ s.booking.client.name|slice:":1"|upper }}</span>
+        <span class="due-text">
+          <b>{{ s.booking.client.name }}</b>
+          <span>{{ s.name }} · {{ s.date|date:"d M" }}{% if s.date < today %} <em class="done">Event done</em>{% endif %}</span>
+        </span>
+      </a>
+      <div class="due-money">
+        <b>{{ s.pending_total|inr }}</b>
+        <span class="paid-bar" title="Paid {{ s.paid_total|inr }} of {{ s.amount|inr }}"><i style="width:{% widthratio s.paid_total s.amount 100 %}%"></i></span>
+        <span>{{ s.paid_total|inr }} of {{ s.amount|inr }} paid</span>
+      </div>
+      <div class="due-btns">
+        <a class="ibtn primary" href="{% url 'payment_add' s.booking_id %}?event={{ s.pk }}" title="Record payment" aria-label="Record payment from {{ s.booking.client.name }}">{% include "_icon.html" with name="plus" %}<span>Record payment</span></a>
+        <a class="ibtn wa" target="_blank" rel="noopener" href="{{ s.wa_payment_reminder }}" title="Remind on WhatsApp" aria-label="Remind {{ s.booking.client.name }} on WhatsApp">{% include "_icon.html" with name="chat" %}<span>Remind</span></a>
+      </div>
+    </div>
+  {% empty %}
+    {% include "_empty.html" with icon="check" title="Nothing pending" text="Every confirmed event is fully paid." %}
+  {% endfor %}
+</section>
+
+<section class="card{% if recent|length > 10 %} collapsed{% endif %}" id="recent-payments">
+  <div class="card-head"><h2><span class="h-ico green">{% include "_icon.html" with name="check" sm=1 %}</span>Recent payments</h2></div>
+  {% for p in recent %}
+    <div class="paid-row{% if forloop.counter > 10 %} extra-row{% endif %}">
+      <div class="pr-date"><b>{{ p.date|date:"d" }}</b><span>{{ p.date|date:"M" }}</span></div>
+      <a class="pr-main" href="{{ p.booking.get_absolute_url }}">
+        <b>{{ p.booking.client.name }}</b>
+        <span>{{ p.session.name|default:"—" }} · {{ p.get_mode_display }}</span>
+      </a>
+      <b class="pr-amt">+{{ p.amount|inr }}</b>
+      <div class="due-btns">
+        <a class="ibtn" href="{% url 'payment_edit' p.pk %}" title="Edit" aria-label="Edit payment">{% include "_icon.html" with name="edit" %}</a>
+        <a class="ibtn" target="_blank" href="{% url 'payment_receipt' p.pk %}" title="Receipt" aria-label="Print receipt">{% include "_icon.html" with name="printer" %}</a>
+      </div>
+    </div>
+  {% empty %}
+    {% include "_empty.html" with icon="wallet" title="No payments yet" text="Payments you record will show here." %}
+  {% endfor %}
+  {% if recent|length > 10 %}<div class="card-body show-more-row"><button type="button" class="btn sm" data-show-more="#recent-payments">Show {{ recent|length|add:"-10" }} more</button></div>{% endif %}
+</section>
+{% endblock %}

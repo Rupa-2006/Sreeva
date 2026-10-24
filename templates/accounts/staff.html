@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Staff{% endblock %}
+{% block heading %}Studio settings{% endblock %}
+
+{% block content %}
+{% include "studios/_settings_tabs.html" %}
+<p class="page-note">Staff can see shoots, the calendar and mark albums delivered, but never payments, staff or settings.</p>
+<div class="grid-2">
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Team</h2><span class="count">{{ members|length }}</span></div>
+      <div class="table-wrap">
+        <table class="table stack">
+          <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Access</th></tr></thead>
+          <tbody>
+          {% for m in members %}
+            <tr>
+              <td data-label="Name"><b>{{ m.user.first_name|default:m.user.username }}</b>{% if m.phone %}<div class="muted" style="font-size:.8rem">{{ m.phone }}</div>{% endif %}</td>
+              <td data-label="Username">{{ m.user.username }}</td>
+              <td data-label="Role">{% if m.is_owner %}<span class="badge work">Owner</span>{% else %}{{ m.designation|default:"Staff" }}{% endif %}</td>
+              <td data-label="Access">
+                {% if m.is_owner %}<span class="muted">Full</span>
+                {% else %}
+                  <div class="btn-row">
+                    <form method="post" action="{% url 'staff_toggle' m.user.pk %}" {% if m.user.is_active %}data-confirm="Turn off this login?"{% endif %}>{% csrf_token %}
+                      {% if m.user.is_active %}<button class="btn sm danger">Disable</button>{% else %}<button class="btn sm">Enable</button>{% endif %}
+                    </form>
+                  </div>
+                  <details class="assign" style="margin-top:8px;padding-top:8px">
+                    <summary>Forgot password? Set a new one</summary>
+                    <form method="post" action="{% url 'staff_set_password' m.user.pk %}" style="display:grid;gap:8px;margin-top:8px;max-width:260px" autocomplete="off">{% csrf_token %}
+                      <input class="input" type="password" name="new_password1" placeholder="New password" autocomplete="new-password" required>
+                      <input class="input" type="password" name="new_password2" placeholder="Type it again" autocomplete="new-password" required>
+                      <button class="btn sm primary">Save new password</button>
+                    </form>
+                  </details>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <div>
+    <section class="card">
+      <div class="card-head"><h2>Add a staff login</h2></div>
+      <div class="card-body">
+        <form method="post" novalidate data-draft="add-staff" data-bound="{{ form.is_bound|yesno:'1,0' }}">{% csrf_token %}
+          <div class="form-grid" style="grid-template-columns:1fr">
+            {% include "_field.html" with field=form.first_name %}
+            {% include "_field.html" with field=form.designation %}
+            {% include "_field.html" with field=form.phone %}
+            {% include "_field.html" with field=form.username %}
+            {% include "_field.html" with field=form.password1 %}
+            {% include "_field.html" with field=form.password2 %}
+          </div>
+          <button class="btn primary block mt">Create login</button>
+        </form>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

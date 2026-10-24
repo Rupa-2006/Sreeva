@@ -1,0 +1,5 @@
+<div class="empty-state">
+  <span class="es-ico">{% include "_icon.html" with name=icon|default:"box" %}</span>
+  <strong>{{ title }}</strong>
+  {% if link %}<a class="btn primary sm" href="{{ link }}">{% include "_icon.html" with name="plus" sm=1 %} {{ link_text }}</a>{% endif %}
+</div>

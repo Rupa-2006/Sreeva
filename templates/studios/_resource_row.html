@@ -1,0 +1,15 @@
+<tr class="res-row-item{% if f.DELETE.value %} removed{% endif %}" data-used="{{ f.instance.n_used|default:0 }}" data-name="{{ f.instance.name }}">
+  <td data-label="Name">
+    {{ f.id }}<span style="display:none">{{ f.DELETE }}</span>
+    {{ f.name }}
+    {% for e in f.name.errors %}<small class="error" style="color:var(--red);display:block">{{ e }}</small>{% endfor %}
+    {% if f.instance.pk and f.instance.n_used %}<small class="muted" style="display:block;margin-top:3px">Used in {{ f.instance.n_used }} booking event{{ f.instance.n_used|pluralize }}</small>{% endif %}
+  </td>
+  <td data-label="Type">{{ f.category }}</td>
+  <td data-label="How many">{{ f.count }}{% for e in f.count.errors %}<small style="color:var(--red);display:block">{{ e }}</small>{% endfor %}</td>
+  <td data-label="Cost for one (₹)">{{ f.rate }}{% if f.price_note %}<small class="muted" style="display:block;margin-top:3px">{{ f.price_note }}</small>{% endif %}{% for e in f.rate.errors %}<small style="color:var(--red);display:block">{{ e }}</small>{% endfor %}</td>
+  <td data-label="In use">{{ f.active }}</td>
+  <td data-label="" class="num">
+    <button type="button" class="btn sm danger" data-remove-row title="Remove this resource">{% include "_icon.html" with name="trash" sm=1 %} Remove</button>
+  </td>
+</tr>

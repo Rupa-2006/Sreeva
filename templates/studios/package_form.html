@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{% if package.pk %}Edit package{% else %}New package{% endif %}{% endblock %}
+{% block heading %}{% if package.pk %}Edit package{% else %}New package{% endif %}{% endblock %}
+{% block subtitle %}<div class="subtitle">Changing a package only affects new bookings. Existing bookings keep their price and team.</div>{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'package_list' %}">Back to packages</a>{% endblock %}
+
+{% block content %}
+{% include "studios/_settings_tabs.html" %}
+<form method="post" novalidate data-draft data-bound="{{ form.is_bound|yesno:'1,0' }}" class="wide-card" style="margin:0">
+  {% csrf_token %}
+  <div class="card"><div class="card-body">
+    <div class="form-grid">
+      {% include "_field.html" with field=form.name %}
+      {% include "_field.html" with field=form.price %}
+      {% include "_field.html" with field=form.event_type %}
+      {% include "_field.html" with field=form.description %}
+      {% include "_field.html" with field=form.active cls="full" %}
+    </div>
+    <div class="res-head"><h3>Team &amp; equipment included</h3><span class="avail-status">Leave 0 for things not included</span></div>
+    <div class="res-grid">
+      {% for rt, f in form.resource_fields %}
+        <div class="res-item">
+          <label for="{{ f.id_for_label }}">{{ rt.name }} <span class="cat-tag">{{ rt.get_category_display }}</span></label>
+          <div class="res-row">{{ f }}</div>
+        </div>
+      {% empty %}<p class="muted">Add resources first in the “Resources &amp; equipment” tab.</p>{% endfor %}
+    </div>
+  </div></div>
+  <div class="btn-row mt">
+    <button class="btn primary" type="submit">{% include "_icon.html" with name="check" sm=1 %} Save package</button>
+    <a class="btn" href="{% url 'package_list' %}">Cancel</a>
+  </div>
+</form>
+{% if package.pk %}
+<form method="post" action="{% url 'package_delete' package.pk %}" class="mt" data-confirm="Delete package “{{ package.name }}”?">
+  {% csrf_token %}<button class="btn sm danger">{% include "_icon.html" with name="trash" sm=1 %} Delete package</button>
+</form>
+{% endif %}
+{% endblock %}

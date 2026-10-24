@@ -1,0 +1,16 @@
+{% extends "auth_base.html" %}
+{% block title %}Create account{% endblock %}
+{% block card %}
+  <h2>Create your account</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-errors">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+    {% include "_field.html" with field=form.first_name %}
+    {% include "_field.html" with field=form.username %}
+    {% include "_field.html" with field=form.email %}
+    {% include "_field.html" with field=form.password1 %}
+    {% include "_field.html" with field=form.password2 %}
+    <button class="btn primary block" type="submit">Create account</button>
+  </form>
+  <p class="alt">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+{% endblock %}

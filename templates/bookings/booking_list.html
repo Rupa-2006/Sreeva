@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Bookings{% endblock %}
+{% block heading %}Bookings{% endblock %}
+{% block actions %}{% if is_owner %}<a class="btn primary" href="{% url 'booking_new' %}">{% include "_icon.html" with name="plus" sm=1 %} New booking</a>{% endif %}{% endblock %}
+
+{% block content %}
+<div class="filters">
+  <div class="tabs">
+    <a href="{% qs when='upcoming' page=None %}" class="{% if when == 'upcoming' %}active{% endif %}">Upcoming</a>
+    <a href="{% qs when='past' page=None %}" class="{% if when == 'past' %}active{% endif %}">Past</a>
+    {% if is_owner %}<a href="{% qs when='dues' page=None %}" class="{% if when == 'dues' %}active{% endif %}">Dues</a>{% endif %}
+    <a href="{% qs when='all' page=None %}" class="{% if when == 'all' %}active{% endif %}">All</a>
+  </div>
+</div>
+<form class="filters" method="get">
+  <input type="hidden" name="when" value="{{ when }}">
+  <input class="input" type="search" name="q" value="{{ q }}" placeholder="Search name, phone, venue…">
+  <select class="input" name="status" onchange="this.form.submit()">
+    <option value="">Any status</option>
+    {% for k, v in status_choices %}<option value="{{ k }}" {% if status == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <select class="input" name="work" onchange="this.form.submit()">
+    <option value="">Album: any</option>
+    <option value="pending" {% if work == "pending" %}selected{% endif %}>Album not delivered</option>
+    <option value="delivered" {% if work == "delivered" %}selected{% endif %}>Album delivered</option>
+  </select>
+  <button class="btn">Search</button>
+</form>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table stack">
+      <thead><tr>
+        <th>Date</th><th>Customer &amp; event</th><th>Status</th><th>Album</th>
+        {% if is_owner %}<th class="num">Total</th><th class="num">Pending</th>{% endif %}
+      </tr></thead>
+      <tbody>
+      {% for b in page %}
+        <tr class="rowlink" data-href="{{ b.get_absolute_url }}">
+          <td data-label="Date" style="white-space:nowrap">
+            <b>{{ b.first_date|date:"d M Y"|default:"—" }}</b>
+            {% if b.n_sessions > 1 %}<div class="muted" style="font-size:.8rem">{{ b.n_sessions }} events, till {{ b.last_date|date:"d M" }}</div>{% endif %}
+          </td>
+          <td data-label="Customer"><a href="{{ b.get_absolute_url }}" class="strong" style="color:var(--ink)">{{ b.client.name }}</a>
+            <div class="muted" style="font-size:.82rem">{{ b.title|default:b.get_event_type_display }} · {{ b.client.phone|phone }}</div></td>
+          <td data-label="Status"><span class="badge {{ b.status }}">{{ b.get_status_display }}</span></td>
+          <td data-label="Album">{% if b.status != 'confirmed' %}<span class="muted">—</span>{% elif b.album_delivered %}<span class="badge delivered">Delivered</span>{% elif b.last_date and b.last_date < today %}<span class="badge ready">Not delivered</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+          {% if is_owner %}
+            <td data-label="Total" class="num">{{ b.total_amount|inr }}</td>
+            <td data-label="Pending" class="num {% if b.pending_total > 0 and b.status == 'confirmed' %}red strong{% else %}muted{% endif %}">{% if b.status != 'confirmed' %}—{% elif b.pending_total > 0 %}{{ b.pending_total|inr }}{% else %}Paid{% endif %}</td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">{% if q or status or work %}{% include "_empty.html" with icon="list" title="No bookings found" text="Try clearing the filters." %}{% elif is_owner %}{% url 'booking_new' as new_url %}{% include "_empty.html" with icon="calendar" title="No bookings found" text="Add a booking and it will show here." link=new_url link_text="New booking" %}{% else %}{% include "_empty.html" with icon="calendar" title="No bookings found" %}{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page.paginator.num_pages > 1 %}
+<div class="pagination">
+  {% if page.has_previous %}<a class="btn sm" href="{% qs page=page.previous_page_number %}">← Prev</a>{% endif %}
+  <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn sm" href="{% qs page=page.next_page_number %}">Next →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

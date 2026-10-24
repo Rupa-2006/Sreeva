@@ -1,0 +1,15 @@
+{% extends "setup_base.html" %}
+{% block title %}Studio details{% endblock %}
+
+{# ---------- First-time setup: Step 2 ---------- #}
+{% block step_body %}
+  <h2 class="wizard-title">Tell us about your studio</h2>
+  <div class="mt">{% include "studios/_studio_form.html" %}</div>
+{% endblock %}
+
+{# ---------- Inside the main website ---------- #}
+{% block heading %}Studio settings{% endblock %}
+{% block content %}
+  {% include "studios/_settings_tabs.html" %}
+  <div class="card wide-card" style="margin:0"><div class="card-body">{% include "studios/_studio_form.html" %}</div></div>
+{% endblock %}

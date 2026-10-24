@@ -1,0 +1,75 @@
+<div class="card session-card{% if sf.DELETE.value %} removed{% endif %}">
+  {{ sf.id }}
+  <div style="display:none">{{ sf.DELETE }}</div>
+  <div class="s-head">
+    <span class="s-num">Event</span>
+    <button type="button" class="btn sm danger" data-remove>{% include "_icon.html" with name="trash" sm=1 %} Remove</button>
+  </div>
+  {% for e in sf.non_field_errors %}{% if e != sf.items_error %}<div class="form-errors"><p>{{ e }}</p></div>{% endif %}{% endfor %}
+  {% if sf.fields.package.queryset.exists %}
+  <details class="fold package-fold" data-auto-open>
+    <summary>+ Package</summary>
+    <div class="package-pick">
+      {% include "_field.html" with field=sf.package %}
+      <span class="pick-note"></span>
+    </div>
+  </details>
+  {% endif %}
+  <div class="form-grid three">
+    {% include "_field.html" with field=sf.date %}
+    {% include "_field.html" with field=sf.slot %}
+    {% include "_field.html" with field=sf.place %}
+    <div class="time-fields">
+      {% include "_field.html" with field=sf.start_time %}
+      {% include "_field.html" with field=sf.end_time %}
+    </div>
+  </div>
+  <div class="res-head">
+    <h3>Items <span class="req" data-items-req>*</span></h3>
+    <span class="avail-status"></span>
+  </div>
+  <p class="items-error"{% if not sf.items_error %} hidden{% endif %}>{% include "_icon.html" with name="alert" sm=1 %} Pick at least one item for this event.</p>
+  {% if sf.resource_fields %}
+  <div class="res-grid">
+    {% for rt, f in sf.resource_fields %}
+      <div class="res-item" data-resource="{{ rt.id }}">
+        <label for="{{ f.id_for_label }}">{{ rt.name }}</label>
+        <div class="res-row">{{ f }} <span class="avail"></span></div>
+        {% for e in f.errors %}<small style="color:var(--red)">{{ e }}</small>{% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="muted">No resources set up yet. <a href="{% url 'setup_resources' %}">Add your team &amp; equipment</a> to track availability.</p>
+  {% endif %}
+  <div class="clash-note"></div>
+
+  <div class="event-price">
+    <div class="charges">
+      {{ sf.extra_charges }}
+      <div class="charge-rows"></div>
+      <details class="fold charges-fold">
+      <summary>+ Extra charges / discount</summary>
+      <div class="charge-chips">
+        <span class="muted">Add:</span>
+        <button type="button" class="chip-btn" data-add-charge="Delivery">+ Delivery</button>
+        <button type="button" class="chip-btn" data-add-charge="Travel">+ Travel</button>
+        <button type="button" class="chip-btn" data-add-charge="Extra album">+ Extra album</button>
+        <button type="button" class="chip-btn" data-add-charge="Printing">+ Printing</button>
+        <button type="button" class="chip-btn" data-add-charge="">+ Other</button>
+        <button type="button" class="chip-btn neg" data-add-charge="Discount" data-negative>− Discount</button>
+      </div>
+      </details>
+      {% for e in sf.extra_charges.errors %}<small class="error" style="color:var(--red)">{{ e }}</small>{% endfor %}
+    </div>
+    <div class="form-grid">
+      <div>
+        {% include "_field.html" with field=sf.amount %}
+        <div class="price-calc" aria-live="polite"></div>
+      </div>
+      {% include "_field.html" with field=sf.advance %}
+    </div>
+    {% if sf.instance.pk and sf.already_paid %}<small class="muted">Already paid for this event: <b>₹{{ sf.already_paid|floatformat:"0g" }}</b>. Record more payments from the booking page.</small>{% endif %}
+  </div>
+
+</div>

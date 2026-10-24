@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{# Login, sign-up and password pages always use this layout, even if someone is logged in. #}
+{% block page %}
+<div class="auth-wrap">
+  <section class="auth-art">
+    <div class="brand"><span class="brand-mark"></span> Sreeva</div>
+    <div>
+      <h1>Your studio diary, finally organised.</h1>
+      <p>Bookings, team availability, payments and album delivery — in one place, on your phone.</p>
+      <ul>
+        <li>{% include "_icon.html" with name="calendar" %} Never double-book a photographer or drone again</li>
+        <li>{% include "_icon.html" with name="wallet" %} See every pending rupee at a glance</li>
+        <li>{% include "_icon.html" with name="box" %} Track each album from shoot to delivery</li>
+        <li>{% include "_icon.html" with name="shield" %} Staff logins that never see your accounts</li>
+      </ul>
+    </div>
+    <small style="color:#64748b">Built for photo &amp; video studios</small>
+  </section>
+  <section class="auth-panel">
+    <div class="auth-card">
+      {% include "_messages.html" %}
+      {% block card %}{% endblock %}
+      {% block auth_footer %}{% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}" class="auth-logout">{% csrf_token %}
+          <span>Logged in as <b>{{ user.first_name|default:user.username }}</b></span>
+          <button type="submit" class="btn sm">{% include "_icon.html" with name="logout" sm=1 %} Log out</button>
+        </form>
+      {% endif %}{% endblock %}
+    </div>
+  </section>
+</div>
+{% endblock page %}

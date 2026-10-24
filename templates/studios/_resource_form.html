@@ -1,0 +1,35 @@
+<form method="post" novalidate id="resource-form" data-draft data-bound="{{ formset.is_bound|yesno:'1,0' }}" data-draft-add="#add-resource" data-draft-total="#id_form-TOTAL_FORMS">
+  {% csrf_token %}
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="form-errors">{% for e in formset.non_form_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+  <p class="page-note"><b>Cost for one</b> is what you charge for one of these at one event. Bookings add it up automatically.</p>
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table resource-table stack">
+        <thead><tr><th>Name</th><th>Type</th><th>How many</th><th>Cost for one (₹)</th><th>In use</th><th></th></tr></thead>
+        <tbody id="resource-rows">
+        {% for f in formset %}{% include "studios/_resource_row.html" %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="empty" id="no-resources" {% if formset.forms %}hidden{% endif %}>
+      <strong>No resources yet</strong>Add your photographers, videographers and equipment.
+    </div>
+    <div class="card-body" style="border-top:1px solid var(--line)">
+      <button type="button" class="btn" id="add-resource">{% include "_icon.html" with name="plus" sm=1 %} Add resource</button>
+    </div>
+  </div>
+
+  <p class="toolbar-note mt">Items already used in bookings are switched off instead of deleted, so old bookings keep their details.</p>
+  <div class="sticky-actions" style="justify-content:flex-start">
+    {% if onboarding %}
+      <a class="btn" href="{% url 'setup_studio' %}">← Back</a>
+      <button class="btn primary" type="submit">{% include "_icon.html" with name="check" sm=1 %} Finish setup &amp; open dashboard</button>
+    {% else %}
+      <button class="btn primary" type="submit">{% include "_icon.html" with name="check" sm=1 %} Save resources</button>
+      <a class="btn" href="{% url 'setup_resources' %}">Discard changes</a>
+    {% endif %}
+  </div>
+</form>
+
+<template id="resource-template">{% with f=formset.empty_form %}{% include "studios/_resource_row.html" %}{% endwith %}</template>

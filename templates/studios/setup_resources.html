@@ -1,0 +1,19 @@
+{% extends "setup_base.html" %}
+{% load static studio_tags %}
+{% block title %}Resources{% endblock %}
+
+{# ---------- First-time setup: Step 3 ---------- #}
+{% block wizard_width %}wide{% endblock %}
+{% block step_body %}
+  <h2 class="wizard-title">What does your studio have?</h2>
+  <div class="mt">{% include "studios/_resource_form.html" %}</div>
+{% endblock %}
+
+{# ---------- Inside the main website ---------- #}
+{% block heading %}Studio settings{% endblock %}
+{% block content %}
+  {% include "studios/_settings_tabs.html" %}
+  {% include "studios/_resource_form.html" %}
+{% endblock %}
+
+{% block scripts %}<script src="{% vstatic 'js/resources.js' %}"></script>{% endblock %}

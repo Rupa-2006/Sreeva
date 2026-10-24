@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Packages{% endblock %}
+{% block heading %}Studio settings{% endblock %}
+{% block subtitle %}<div class="subtitle">The cost of each item (1 TV, 1 drone) is best set in <a href="{% url 'setup_resources' %}">Resources &amp; equipment → Cost for one</a>. You can also make <b>combos</b>, e.g. “Wedding – Gold: 2 photographers + drone + album”, which are picked automatically when they're the better deal.</div>{% endblock %}
+{% block actions %}<a class="btn primary" href="{% url 'package_new' %}">{% include "_icon.html" with name="plus" sm=1 %} New package</a>{% endblock %}
+
+{% block content %}
+{% include "studios/_settings_tabs.html" %}
+{% if single_items %}
+<div class="fix-box info mb">
+  <div>
+    <h2>✓ Used as item prices</h2>
+    <p>{% for p, rt in single_items %}<b>{{ p.name }}</b> = 1 {{ rt.name }} · {{ p.price|inr }}{% if not forloop.last %} &nbsp;·&nbsp; {% endif %}{% endfor %}</p>
+    <p class="muted" style="margin:0">Packages with just one item are used as that item's price. While booking, every item the customer needs is added up automatically.</p>
+  </div>
+</div>
+{% endif %}
+{% if packages %}
+<div class="package-grid">
+  {% for p in packages %}
+    <a class="card package-card{% if not p.active %} off{% endif %}" href="{% url 'package_edit' p.pk %}">
+      <div class="row-between">
+        <h2>{{ p.name }}</h2>
+        {% if not p.active %}<span class="badge cancelled">Hidden</span>{% endif %}
+      </div>
+      <div class="pk-price">{{ p.price|inr }}</div>
+      {% if p.description %}<p class="muted" style="margin:0 0 8px;font-size:.88rem">{{ p.description }}</p>{% endif %}
+      <div class="chips">
+        {% for i in p.items.all %}<span class="chip">{{ i.quantity }} {{ i.resource_type.name }}</span>
+        {% empty %}<span class="muted" style="font-size:.84rem">No team set</span>{% endfor %}
+      </div>
+      <div class="muted" style="font-size:.8rem;margin-top:10px">{% if p.event_type %}Usually for: {{ p.event_type|title }}{% else %}Any event{% endif %} · <b style="color:var(--accent-ink)">Edit →</b></div>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty" style="padding:40px 20px">
+  <strong>No packages yet</strong>
+  For example: “Wedding – Gold · ₹75,000 · 2 photographers, 2 videographers, 1 drone”.
+  <div class="mt"><a class="btn primary" href="{% url 'package_new' %}">{% include "_icon.html" with name="plus" sm=1 %} Create your first package</a></div>
+</div></div>
+{% endif %}
+{% endblock %}

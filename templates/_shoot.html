@@ -1,0 +1,19 @@
+<a class="shoot" href="{{ s.booking.get_absolute_url }}">
+  <div class="shoot-time">
+    <strong>{{ s.time_label }}</strong>
+    <span>{{ s.date|date:"D, d M" }}</span>
+  </div>
+  <div class="shoot-body">
+    <div class="shoot-title">{{ s.booking.client.name }} · {{ s.name }}
+      {% if s.booking.status == "enquiry" %}<span class="badge enquiry">Enquiry</span>{% endif %}
+    </div>
+    <div class="shoot-meta">{% include "_icon.html" with name="pin" sm=1 %} {{ s.place }}</div>
+    {% if not compact %}<div class="chips">
+      {% for n in s.resource_needs.all %}<span class="chip{% if n.freelancers %} hired{% endif %}">{{ n.quantity }} {{ n.resource_type.name }}{% if n.freelancers %} · {{ n.freelancers }} hired{% endif %}</span>{% endfor %}
+    </div>{% endif %}
+    {% with team=s.assigned_staff.all %}
+      {% if team %}<div class="shoot-team">Team: {% for u in team %}{{ u.first_name|default:u.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+      {% elif s.booking.status == "confirmed" %}<div class="shoot-team warn">No team assigned yet</div>{% endif %}
+    {% endwith %}
+  </div>
+</a>

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load studio_tags %}
+{% block title %}Quick booking{% endblock %}
+{% block heading %}⚡ Quick booking{% endblock %}
+{% block subtitle %}<div class="subtitle">For phone calls: save the essentials now, add venue, team and more events later with Edit.</div>{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'booking_new' %}">Full booking form</a>{% endblock %}
+
+{% block content %}
+<form method="post" novalidate class="quick" data-draft data-bound="{{ form.is_bound|yesno:'1,0' }}">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="form-errors">{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>{% endif %}
+  <div class="card"><div class="card-body">
+    <div class="quick-status">
+      {% for r in form.status %}<label class="quick-radio">{{ r.tag }} <span>{{ r.choice_label }}</span></label>{% endfor %}
+    </div>
+
+    <div class="form-grid">
+      <div>
+        {% include "_field.html" with field=form.phone %}
+        <div class="client-hint" id="client-hint"></div>
+      </div>
+      {% include "_field.html" with field=form.name %}
+      {% include "_field.html" with field=form.date %}
+      {% include "_field.html" with field=form.slot %}
+      {% include "_field.html" with field=form.event_type %}
+      {% include "_field.html" with field=form.place %}
+    </div>
+
+    <div class="event-price mt">
+      <div class="form-grid">
+        {% if form.fields.package.queryset.exists %}{% include "_field.html" with field=form.package cls="full" %}{% endif %}
+        {% include "_field.html" with field=form.price %}
+        {% include "_field.html" with field=form.advance %}
+        {% include "_field.html" with field=form.advance_mode %}
+      </div>
+    </div>
+
+    <div class="avail-box mt" id="quick-avail" data-url="{% url 'api_availability' %}">Pick a date to see who's free.</div>
+    <div class="mt">{% include "_field.html" with field=form.allow_freelancers %}</div>
+  </div></div>
+
+  <div class="btn-row mt">
+    <button class="btn primary" type="submit">{% include "_icon.html" with name="check" sm=1 %} Save</button>
+    <a class="btn" href="{% url 'dashboard' %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{{ package_data|json_script:"package-data" }}
+<script>
+(function () {
+  var pkgs = JSON.parse(document.getElementById("package-data").textContent || "{}");
+  var sel = document.getElementById("id_package"), price = document.getElementById("id_price");
+  if (sel) sel.addEventListener("change", function () {
+    var p = pkgs[sel.value];
+    if (p && price) price.value = p.price;
+  });
+
+  // Returning customer: fill the name from the phone number
+  var phone = document.getElementById("id_phone"), name = document.getElementById("id_name"), hint = document.getElementById("client-hint");
+  phone.addEventListener("change", function () {
+    if (phone.value.replace(/\D/g, "").length < 10) { hint.textContent = ""; return; }
+    fetch("{% url 'api_client_lookup' %}?phone=" + encodeURIComponent(phone.value), { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (!c.found) { hint.textContent = "New customer"; hint.style.color = "var(--muted)"; return; }
+        hint.style.color = ""; hint.textContent = "Returning customer · " + c.bookings + " earlier booking" + (c.bookings === 1 ? "" : "s");
+        if (!name.value) name.value = c.name;
+      });
+  });
+
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  // Live "who's free" for the chosen date and time
+  var box = document.getElementById("quick-avail"), date = document.getElementById("id_date"), slot = document.getElementById("id_slot");
+  function check() {
+    if (!date.value) { box.textContent = "Pick a date to see who's free."; return; }
+    box.textContent = "Checking…";
+    fetch(box.dataset.url + "?date=" + date.value + "&slot=" + slot.value, { credentials: "same-origin" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) { box.textContent = d.error; return; }
+        var html = '<div class="avail-chips">';
+        d.resources.forEach(function (r) {
+          var cls = r.free === 0 ? "none" : (r.free < r.total ? "low" : "ok");
+          html += '<span class="avail ' + cls + '">' + esc(r.name) + ": " + r.free + " of " + r.total + " free</span>";
+        });
+        html += "</div>";
+        html += d.clashes.length
+          ? '<div class="muted" style="margin-top:8px;font-size:.84rem">Already booked at this time: ' + d.clashes.map(esc).join(" · ") + "</div>"
+          : '<div class="green" style="margin-top:8px;font-size:.84rem;font-weight:600">✓ Nothing else booked at this time</div>';
+        box.innerHTML = html;
+      });
+  }
+  date.addEventListener("change", check); slot.addEventListener("change", check);
+  check();
+})();
+</script>
+{% endblock %}
