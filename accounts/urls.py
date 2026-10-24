@@ -8,6 +8,7 @@ urlpatterns = [
     path("login/", views.RateLimitedLoginView.as_view(), name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("signup/", views.signup, name="signup"),
+    path("demo/", views.try_demo, name="try_demo"),
     # Forgot username / password
     path("forgot/", recovery.ForgotView.as_view(), name="password_reset"),
     path("forgot/sent/", recovery.ForgotSentView.as_view(), name="password_reset_done"),

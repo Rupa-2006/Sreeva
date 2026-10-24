@@ -23,26 +23,33 @@ from studios.models import DEFAULT_RESOURCES, ResourceType, Studio
 class Command(BaseCommand):
     help = "Create a demo studio with sample bookings, payments and staff."
 
+    # who gets created (the online "Try the demo" studio uses other names, see setup_demo)
+    OWNER, OWNER_PASSWORD, STAFF_PASSWORD, STAFF_PREFIX = "owner", "Studio@2026", "Staff@2026", ""
+    STUDIO_NAME, OWNER_EMAIL = "Sri Sai Photography", "owner@srisaiphoto.example"
+
     def add_arguments(self, parser):
         parser.add_argument("--reset", action="store_true", help="Remove the existing demo studio first")
+
+    def staff_names(self):
+        return [self.STAFF_PREFIX + n for n in ("ravi", "kiran", "suresh")]
 
     @transaction.atomic
     def handle(self, *args, reset=False, **opts):
         if reset:
-            for s in Studio.objects.filter(owner__username="owner"):
+            for s in Studio.objects.filter(owner__username=self.OWNER):
                 Payment.objects.filter(booking__studio=s).delete()
                 Booking.objects.filter(studio=s).delete()
                 s.delete()
-            User.objects.filter(username__in=["owner", "ravi", "kiran", "suresh"]).delete()
-        if User.objects.filter(username="owner").exists():
+            User.objects.filter(username__in=[self.OWNER] + self.staff_names()).delete()
+        if User.objects.filter(username=self.OWNER).exists():
             self.stdout.write(self.style.WARNING("Demo data already exists. Use --reset to recreate."))
             return
 
         owner = User.objects.create_user(
-            "owner", email="owner@srisaiphoto.example", password="Studio@2026", first_name="Srinivas"
+            self.OWNER, email=self.OWNER_EMAIL, password=self.OWNER_PASSWORD, first_name="Srinivas"
         )
         studio = Studio.objects.create(
-            owner=owner, name="Sri Sai Photography", phone="9848012345",
+            owner=owner, name=self.STUDIO_NAME, phone="9848012345",
             address="Main Road, near Bus Stand", city="Tirupati",
         )
         Profile.objects.filter(user=owner).update(studio=studio, role=Profile.OWNER, phone="9848012345")
@@ -71,7 +78,7 @@ class Command(BaseCommand):
         for username, first, designation in [
             ("ravi", "Ravi", "Photographer"), ("kiran", "Kiran", "Videographer"), ("suresh", "Suresh", "Editor"),
         ]:
-            u = User.objects.create_user(username, password="Staff@2026", first_name=first)
+            u = User.objects.create_user(self.STAFF_PREFIX + username, password=self.STAFF_PASSWORD, first_name=first)
             Profile.objects.filter(user=u).update(studio=studio, role=Profile.STAFF, designation=designation)
             staff[username] = u
 
@@ -151,6 +158,9 @@ class Command(BaseCommand):
             dict(name="College fest", date=d(7), slot="full", place="SV University", needs={"Photographer": 2}),
         ])
 
+        if hasattr(studio, "setup_complete"):
+            Studio.objects.filter(pk=studio.pk).update(setup_complete=True)
         self.stdout.write(self.style.SUCCESS(
-            "Demo studio ready.\n  Owner login:  owner / Studio@2026\n  Staff login:  ravi / Staff@2026"
+            f"Demo studio ready.\n  Owner login:  {self.OWNER} / {self.OWNER_PASSWORD}"
+            f"\n  Staff login:  {self.STAFF_PREFIX}ravi / {self.STAFF_PASSWORD}"
         ))

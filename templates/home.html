@@ -17,6 +17,11 @@
         {% if allow_signup %}<a class="btn primary" href="{% url 'signup' %}">Create studio account</a>{% endif %}
         <a class="btn" href="{% url 'login' %}">Log in</a>
       </div>
+      {% if demo_ready %}
+      <form method="post" action="{% url 'try_demo' %}" class="land-demo">{% csrf_token %}
+        <button type="submit">{% include "_icon.html" with name="grid" sm=1 %} Try the demo — no sign-up</button>
+      </form>
+      {% endif %}
       <small class="land-free">{% include "_icon.html" with name="check" sm=1 %} Free &nbsp;·&nbsp; {% include "_icon.html" with name="check" sm=1 %} No card needed</small>
     </div>
 
