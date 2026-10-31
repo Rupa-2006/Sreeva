@@ -5,7 +5,7 @@ bookings, team and equipment availability, payments, album delivery and staff ac
 
 Built for my father's photography studio.
 
-🔗 **Live:** https://sreevastudio.pythonanywhere.com — tap **“Try the demo”** to explore a sample studio, no sign-up needed
+🔗 **Live:** https://sreeva.pythonanywhere.com — tap **“Try the demo”** to explore a sample studio, no sign-up needed
 (or log in with `demo` / `Demo@2026`). The demo studio is separate from real studios and refreshes every day.
 
 ![Sreeva dashboard](docs/screenshots/desktop-dashboard.png)
