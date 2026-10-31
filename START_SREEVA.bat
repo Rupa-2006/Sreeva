@@ -1,6 +1,8 @@
 @echo off
 title Sreeva - keep this window open while using the website
 cd /d "%~dp0"
+rem development mode on this computer (the live website runs with DEBUG off)
+set DJANGO_DEBUG=1
 
 echo.
 echo  ==========================================

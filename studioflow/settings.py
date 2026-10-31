@@ -1,8 +1,10 @@
 """
 Sreeva settings.
 
-Secrets and production switches come from environment variables, so the same
-code runs safely on a laptop (DEBUG on) and on a server (DEBUG off, HTTPS on).
+Secure by default: DEBUG is off and HTTPS-only settings are on unless you turn on
+development mode with DJANGO_DEBUG=1 (START_SREEVA.bat does this on the laptop).
+The secret key is never in the code: it comes from DJANGO_SECRET_KEY or a private
+`.secret_key` file that is created automatically on first run (and kept out of git).
 """
 import os
 import sys
@@ -11,18 +13,28 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Core -------------------------------------------------------------------
+RUNNING_TESTS = "test" in sys.argv
+
+
 def _secret_key():
-    """From the environment, else from a private `.secret_key` file made on the server."""
+    """From the environment, else from the private `.secret_key` file (made on first run)."""
     if os.environ.get("DJANGO_SECRET_KEY"):
         return os.environ["DJANGO_SECRET_KEY"]
     key_file = BASE_DIR / ".secret_key"
     if key_file.exists():
         return key_file.read_text().strip()
-    return "dev-only-insecure-key-change-me-before-deploying-3f9a1c7e5b"
+    from django.core.management.utils import get_random_secret_key
+    key = get_random_secret_key()
+    try:
+        key_file.write_text(key)
+        os.chmod(key_file, 0o600)
+    except OSError:  # read-only folder: still run, with a key that lasts until restart
+        pass
+    return key
 
 
 SECRET_KEY = _secret_key()
-DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 ALLOWED_HOSTS = [
     h.strip()
     for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
@@ -124,7 +136,7 @@ LOGOUT_REDIRECT_URL = "login"
 # Point it at a Google Drive / OneDrive folder to keep copies off this computer too:
 #   set SREEVA_BACKUP_DIR=C:\Users\<you>\Google Drive\Sreeva backups
 BACKUP_DIR = Path(os.environ.get("SREEVA_BACKUP_DIR", BASE_DIR / "backups"))
-AUTO_BACKUP = "test" not in sys.argv  # never during automatic tests
+AUTO_BACKUP = not RUNNING_TESTS  # never during automatic tests
 
 # --- Email (used for "Forgot username or password?") -------------------------
 # By default emails are PRINTED in the Command Prompt window running the server,
@@ -164,7 +176,7 @@ X_FRAME_OPTIONS = "DENY"                # can't be embedded in other sites (clic
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 
-if not DEBUG:
+if not DEBUG and not RUNNING_TESTS:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = os.environ.get("DJANGO_SSL_REDIRECT", "1") == "1"
