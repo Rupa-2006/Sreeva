@@ -35,6 +35,17 @@ def _demo_user():
     return User.objects.filter(username=DEMO_USERNAME, is_active=True, profile__studio__isnull=False).first()
 
 
+PRIVACY_UPDATED = "2026-10-31"
+
+
+def privacy(request):
+    from datetime import date
+    return render(request, "privacy.html", {
+        "updated": date.fromisoformat(PRIVACY_UPDATED),
+        "contact": getattr(settings, "EMAIL_HOST_USER", "") or "",
+    })
+
+
 def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")

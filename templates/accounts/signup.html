@@ -11,6 +11,7 @@
     {% include "_field.html" with field=form.password1 %}
     {% include "_field.html" with field=form.password2 %}
     <button class="btn primary block" type="submit">Create account</button>
+    <small class="muted" style="text-align:center">By creating an account you agree to the <a href="{% url 'privacy' %}" target="_blank">Privacy &amp; terms</a>.</small>
   </form>
   <p class="alt">Already registered? <a href="{% url 'login' %}">Log in</a></p>
 {% endblock %}

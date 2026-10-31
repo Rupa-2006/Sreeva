@@ -5,6 +5,7 @@ from . import recovery, verify, views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("privacy/", views.privacy, name="privacy"),
     path("login/", views.RateLimitedLoginView.as_view(), name="login"),
     path("logout/", views.logout_view, name="logout"),
     path("signup/", views.signup, name="signup"),

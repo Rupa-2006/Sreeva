@@ -29,6 +29,7 @@
     <button class="btn primary block" type="submit">Log in</button>
   </form>
   <p class="alt" style="margin-top:14px"><a href="{% url 'password_reset' %}">Forgot username or password?</a></p>
+  <p class="alt" style="font-size:.85rem"><a href="{% url 'privacy' %}">Privacy &amp; terms</a></p>
   {% if allow_signup %}<p class="alt">New studio? <a href="{% url 'signup' %}">Create an account</a></p>{% endif %}
 {% endblock %}
 {% block auth_footer %}{% endblock %}
