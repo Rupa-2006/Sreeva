@@ -52,7 +52,8 @@ class Command(BaseCommand):
             owner=owner, name=self.STUDIO_NAME, phone="9848012345",
             address="Main Road, near Bus Stand", city="Tirupati",
         )
-        Profile.objects.filter(user=owner).update(studio=studio, role=Profile.OWNER, phone="9848012345")
+        Profile.objects.filter(user=owner).update(studio=studio, role=Profile.OWNER, phone="9848012345",
+                                                  email_verified=True)
 
         counts = {"Photographer": 3, "Candid Photographer": 1, "Videographer": 2,
                   "Drone": 1, "LED Screen": 1, "Lighting Kit": 2}

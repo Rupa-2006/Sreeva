@@ -133,6 +133,8 @@ def signup(request):
         if user is not None:
             Profile.objects.filter(user=user).update(role=Profile.OWNER)
             login(request, user)
+            from .verify import send_verification
+            send_verification(request, user)
             messages.success(request, "Account created. Now tell us about your studio.")
             return redirect("setup_studio")
     return render(request, "accounts/signup.html", {"form": form})

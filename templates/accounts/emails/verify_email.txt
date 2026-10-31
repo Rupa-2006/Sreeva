@@ -1,0 +1,13 @@
+{% autoescape off %}Hello {{ user.first_name|default:user.username }},
+
+Please confirm this email address for your Sreeva account ({{ user.get_username }}):
+
+{{ link }}
+
+The link works for 3 days. Once confirmed, you can use "Forgot username or password?"
+to recover your login with this email.
+
+If you didn't create a Sreeva account, ignore this email.
+
+- Sreeva
+{% endautoescape %}

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.decorators.debug import sensitive_post_parameters
 
-from . import recovery, views
+from . import recovery, verify, views
 
 urlpatterns = [
     path("", views.home, name="home"),
@@ -9,6 +9,8 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("signup/", views.signup, name="signup"),
     path("demo/", views.try_demo, name="try_demo"),
+    path("verify-email/resend/", verify.resend_verification, name="resend_verification"),
+    path("verify-email/<str:token>/", verify.verify_email, name="verify_email"),
     # Forgot username / password
     path("forgot/", recovery.ForgotView.as_view(), name="password_reset"),
     path("forgot/sent/", recovery.ForgotSentView.as_view(), name="password_reset_done"),

@@ -63,6 +63,13 @@
       <div class="actions">{% block actions %}{% endblock %}</div>
       <a class="bell{% if notif_count %} has{% endif %}" href="{% url 'notifications' %}" title="Notifications" aria-label="Notifications">{% include "_icon.html" with name="bell" %}<span class="bell-count" data-notif-count{% if not notif_count %} hidden{% endif %}>{{ notif_count }}</span></a>
     </header>
+    {% if needs_email_verify %}
+    <div class="verify-bar">
+      {% include "_icon.html" with name="alert" sm=1 %}
+      <span>Confirm your email <b>{{ user.email }}</b> — we sent you a link.{% if request.session.verify_sent %} Sent again ✓{% endif %}</span>
+      <form method="post" action="{% url 'resend_verification' %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="btn sm">Resend</button></form>
+    </div>
+    {% endif %}
     {% include "_messages.html" with quiet=1 %}
     <main class="content">{% block content %}{% endblock %}</main>
   </div>
