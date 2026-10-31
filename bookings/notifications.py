@@ -152,7 +152,32 @@ def owner_reminders(studio, today):
             url=b.get_absolute_url(), url_label="Open booking",
             action_url=whatsapp_url(b.client.phone, text), action_label="Follow up",
         ))
+
+    # Monthly: keep a copy of the data off the server (the daily backups live on the same server)
+    out += backup_reminder(studio, today)
     return out
+
+
+BACKUP_EVERY_DAYS = 30
+
+
+def backup_reminder(studio, today):
+    from accounts.models import AuditLog
+    if not Booking.objects.filter(studio=studio).exists():
+        return []
+    last = (AuditLog.objects.filter(studio=studio, action="Exported to Excel")
+            .order_by("-created_at").values_list("created_at", flat=True).first())
+    started = studio.owner.date_joined if getattr(studio, "owner", None) else None
+    since = last or started
+    if since and timezone.localtime(since).date() > today - timedelta(days=BACKUP_EVERY_DAYS):
+        return []
+    return [dict(
+        key=f"backup:{today:%Y-%m}", ref_date=today, kind=Notification.BACKUP,
+        title="Download your monthly backup",
+        body="Keep a copy of all your bookings and payments on your phone or computer.",
+        url=reverse("backup"), url_label="Backup & export",
+        action_url=reverse("export_excel"), action_label="Download Excel",
+    )]
 
 
 def staff_reminders(user, studio, today):
