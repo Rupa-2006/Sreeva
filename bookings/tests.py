@@ -643,6 +643,10 @@ class SecurityTests(TestCase):
         from django.core import mail
         self.owner.email = "owner@studio.in"
         self.owner.save()
+        # an unconfirmed email gets nothing (stops sign-ups with someone else's address)
+        self.client.post(reverse("password_reset"), {"email": "OWNER@studio.in"})
+        self.assertEqual(len(mail.outbox), 0)
+        Profile.objects.filter(user=self.owner).update(email_verified=True)
         r = self.client.post(reverse("password_reset"), {"email": "OWNER@studio.in"}, follow=True)
         self.assertContains(r, "Check your email")
         self.assertEqual(len(mail.outbox), 1)
@@ -1008,3 +1012,26 @@ class DemoStudioTests(TestCase):
         self.assertTrue(Studio.objects.filter(name="Real Studio").exists())
         self.assertEqual(Studio.objects.filter(name="Demo Studio").count(), 1)
         self.assertGreater(User.objects.get(username="demo").date_joined, timezone.now() - timedelta(hours=1))
+
+
+class EmailVerificationTests(TestCase):
+    def test_signup_sends_confirmation_link(self):
+        import re
+
+        from django.core import mail
+        r = self.client.post(reverse("signup"), {
+            "first_name": "Guru", "username": "guru_studio", "email": "Guru@Example.com",
+            "password1": "Strong@pass9", "password2": "Strong@pass9"})
+        self.assertEqual(r.status_code, 302)
+        user = User.objects.get(username="guru_studio")
+        self.assertFalse(user.profile.email_verified)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["guru@example.com"])
+        link = re.search(r"https?://[^/]+(/verify-email/\S+)", mail.outbox[0].body).group(1)
+        # a tampered link is refused
+        self.client.get(link[:-3] + "xyz/")
+        user.profile.refresh_from_db()
+        self.assertFalse(user.profile.email_verified)
+        self.client.get(link)
+        user.profile.refresh_from_db()
+        self.assertTrue(user.profile.email_verified)

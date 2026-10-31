@@ -26,6 +26,9 @@ class Profile(models.Model):
     designation = models.CharField(
         max_length=60, blank=True, help_text="e.g. Photographer, Videographer, Editor"
     )
+    # Set when the owner opens the "confirm your email" link. Password-recovery emails
+    # are only sent to confirmed addresses, so nobody can sign up with someone else's email.
+    email_verified = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"

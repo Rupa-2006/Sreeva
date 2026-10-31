@@ -30,6 +30,11 @@ RESET_WINDOW = 60 * 60
 
 
 class ForgotForm(PasswordResetForm):
+    def get_users(self, email):
+        # only confirmed addresses get a recovery email (see accounts/verify.py)
+        return (u for u in super().get_users(email)
+                if getattr(getattr(u, "profile", None), "email_verified", False))
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["email"].label = "Email used when you signed up"
