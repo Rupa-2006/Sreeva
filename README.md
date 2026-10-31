@@ -56,6 +56,7 @@ cd sreeva
 python -m venv venv
 venv\Scripts\activate          # macOS / Linux: source venv/bin/activate
 pip install -r requirements.txt
+set DJANGO_DEBUG=1             # development mode (macOS / Linux: export DJANGO_DEBUG=1)
 python manage.py migrate
 python manage.py seed_demo     # optional: a sample studio with bookings
 python manage.py runserver
