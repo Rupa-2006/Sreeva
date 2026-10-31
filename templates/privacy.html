@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Privacy &amp; terms{% endblock %}
+{% block page %}
+<div class="legal">
+  <header class="land-top">
+    <a class="brand land-brand" href="{% url 'home' %}" style="text-decoration:none"><span class="brand-mark"></span> Sreeva</a>
+    <a class="btn sm" href="{% url 'login' %}">Log in</a>
+  </header>
+
+  <article class="card legal-card">
+    <h1>Privacy &amp; terms</h1>
+    <p class="muted">Last updated: {{ updated|date:"j F Y" }}</p>
+
+    <h2>What Sreeva stores</h2>
+    <ul>
+      <li><b>Your account:</b> name, username, email and your password (stored only as a secure one-way hash — nobody can read it).</li>
+      <li><b>Your studio:</b> studio name, phone, address, team and equipment.</li>
+      <li><b>What you enter for your work:</b> customer names and phone numbers, event dates and places, prices and payments.</li>
+      <li><b>Security log:</b> logins and important changes with time and IP address, to protect your account.</li>
+    </ul>
+
+    <h2>How it is used</h2>
+    <ul>
+      <li>Only to run your studio’s bookings, payments and reminders.</li>
+      <li>Never sold or shared. No advertising and no tracking — cookies are used only to keep you logged in securely.</li>
+      <li>Emails are sent only to confirm your email and to help you recover your login.</li>
+    </ul>
+
+    <h2>Who can see it</h2>
+    <ul>
+      <li>Only people in your own studio: the owner sees everything; staff see their shoots but no money.</li>
+      <li>Other studios can never see your data.</li>
+      <li>The site maintainer can access the server only to keep it running and to restore backups.</li>
+    </ul>
+
+    <h2>Where it is kept</h2>
+    <p>On PythonAnywhere’s servers, sent over HTTPS. A copy of the database is saved daily (the last 30 are kept). Owners can download all their data as an Excel file any time from Studio settings → Backup &amp; export.</p>
+
+    <h2>Your customers’ details</h2>
+    <p>Studios add their customers’ names and phone numbers. Please add only what you need for the booking and tell customers you keep them for their booking and reminders.</p>
+
+    <h2>Deleting your data</h2>
+    <p>Owners can delete bookings and payments themselves.{% if contact %} To delete your whole account and studio, email <a href="mailto:{{ contact }}">{{ contact }}</a> from your account’s email address.{% endif %}</p>
+
+    <h2>Terms of use</h2>
+    <ul>
+      <li>Sreeva is free and provided “as is”. We work to keep it running and your data safe, but cannot guarantee it will never be unavailable — keep your own Excel backup now and then.</li>
+      <li>Use it only for genuine studio work. Accounts used for spam or abuse may be closed.</li>
+      <li>The “Try the demo” studio is shared sample data and is reset every day — don’t enter real details there.</li>
+      <li>If these terms change, the new version will appear on this page.</li>
+    </ul>
+  </article>
+  <footer class="land-foot"><a href="{% url 'home' %}">Sreeva</a> · Made for studios</footer>
+</div>
+{% endblock page %}

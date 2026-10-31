@@ -1035,3 +1035,10 @@ class EmailVerificationTests(TestCase):
         self.client.get(link)
         user.profile.refresh_from_db()
         self.assertTrue(user.profile.email_verified)
+
+
+class PrivacyPageTests(TestCase):
+    def test_privacy_page_is_public_and_linked(self):
+        self.assertContains(self.client.get(reverse("privacy")), "What Sreeva stores")
+        self.assertContains(self.client.get(reverse("home")), reverse("privacy"))
+        self.assertContains(self.client.get(reverse("signup")), reverse("privacy"))
