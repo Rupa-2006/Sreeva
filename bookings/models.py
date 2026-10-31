@@ -423,6 +423,7 @@ class Notification(models.Model):
     NO_TEAM, NO_ADVANCE, PAYMENT_DUE = "no_team", "no_advance", "payment_due"
     DELIVERY_SOON, DELIVERY_LATE = "delivery_soon", "delivery_late"
     ENQUIRY, ASSIGNED = "enquiry", "assigned"
+    BACKUP = "backup"
     KIND_CHOICES = [
         (SHOOT_TODAY, "Shoot today"),
         (SHOOT_TOMORROW, "Shoot tomorrow"),
@@ -433,6 +434,7 @@ class Notification(models.Model):
         (DELIVERY_LATE, "Delivery overdue"),
         (ENQUIRY, "Enquiry not confirmed"),
         (ASSIGNED, "You're on a shoot"),
+        (BACKUP, "Backup reminder"),
     ]
 
     studio = models.ForeignKey("studios.Studio", on_delete=models.CASCADE, related_name="notifications")

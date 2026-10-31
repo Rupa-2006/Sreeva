@@ -1042,3 +1042,24 @@ class PrivacyPageTests(TestCase):
         self.assertContains(self.client.get(reverse("privacy")), "What Sreeva stores")
         self.assertContains(self.client.get(reverse("home")), reverse("privacy"))
         self.assertContains(self.client.get(reverse("signup")), reverse("privacy"))
+
+
+class BackupReminderTests(TestCase):
+    def test_monthly_backup_reminder_until_downloaded(self):
+        from django.core.management import call_command
+
+        from bookings import notifications
+        from bookings.models import Notification
+        call_command("seed_demo", stdout=open(os.devnull, "w"))
+        owner = User.objects.get(username="owner")
+        studio = owner.profile.studio
+        User.objects.filter(pk=owner.pk).update(date_joined=timezone.now() - timedelta(days=40))
+        studio.refresh_from_db()
+        notifications.refresh(owner, studio, True, force=True)
+        n = Notification.objects.get(user=owner, kind=Notification.BACKUP)
+        self.assertIsNone(n.done_at)
+        self.client.force_login(owner)
+        self.assertEqual(self.client.get(reverse("export_excel")).status_code, 200)
+        notifications.refresh(owner, studio, True, force=True)
+        n.refresh_from_db()
+        self.assertIsNotNone(n.done_at)  # cleared itself after the download
