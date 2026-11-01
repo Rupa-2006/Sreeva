@@ -14,7 +14,8 @@ Your address will be **https://YOURNAME.pythonanywhere.com** (YOURNAME = the use
    Wait until it says **Done!**.
 5. **Turn on HTTPS**: back on the **Web** tab, scroll to *Security* → switch **Force HTTPS** ON → press the green **Reload** button at the top.
 6. **Create your studio**: open https://YOURNAME.pythonanywhere.com → *Create studio account* → fill in the studio details.
-7. **Close sign-ups** (so strangers can't make accounts) — in the Bash console:
+7. **Sign-ups close by themselves** once your studio account exists, so strangers can't make accounts.
+   To be extra sure (or if this site was set up with an older version), close them for good in the Bash console:
 
    ```bash
    bash ~/studioflow/deploy/close_signup.sh

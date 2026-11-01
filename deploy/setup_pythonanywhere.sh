@@ -32,7 +32,10 @@ if [ ! -f "$WSGI" ]; then
   echo "   choose 'Manual configuration' and 'Python 3.12', then run this again."
   exit 1
 fi
-SIGNUP=1
+# Sign-ups: "auto" = open only until the first real owner account exists.
+# Keep "0" if sign-ups were closed with close_signup.sh. (Older versions of this
+# script wrote "1" by default, so "1" is not kept: run close_signup.sh open for that.)
+SIGNUP=auto
 if grep -q 'SREEVA_ALLOW_SIGNUP"] = "0"' "$WSGI" 2>/dev/null; then SIGNUP=0; fi
 cat > "$WSGI" <<PYEOF
 # Sreeva — written by deploy/setup_pythonanywhere.sh

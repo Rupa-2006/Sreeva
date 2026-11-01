@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -579,6 +579,7 @@ class ResourcePageTests(TestCase):
         self.assertEqual(ResourceType.objects.get(studio=self.studio, name="Drone").count, 2)
 
 
+@override_settings(ALLOW_SIGNUP=True)  # these tests exercise the sign-up form itself
 class SecurityTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -983,11 +984,39 @@ class AlbumDeliveredTests(TestCase):
 
 class SignupSwitchTests(TestCase):
     def test_signup_can_be_closed_online(self):
-        from django.test import override_settings
         with override_settings(ALLOW_SIGNUP=False):
             r = self.client.get(reverse("signup"))
             self.assertRedirects(r, reverse("login"))
             self.assertNotContains(self.client.get(reverse("login")), "Create an account")
+        self.assertContains(self.client.get(reverse("login")), "Create an account")
+
+    @override_settings(ALLOW_SIGNUP=None)
+    def test_automatic_mode_closes_after_first_real_owner(self):
+        # A brand-new installation: the first owner can sign up...
+        self.assertContains(self.client.get(reverse("login")), "Create an account")
+        r = self.client.post(reverse("signup"), {
+            "first_name": "Guru", "username": "guru", "email": "guru@example.com",
+            "password1": "Strong@pass9", "password2": "Strong@pass9"})
+        self.assertTrue(User.objects.filter(username="guru").exists())
+        self.client.logout()
+        # ...and after that, strangers can't.
+        self.assertNotContains(self.client.get(reverse("login")), "Create an account")
+        self.assertRedirects(self.client.get(reverse("signup")), reverse("login"))
+        self.client.post(reverse("signup"), {
+            "first_name": "X", "username": "stranger", "email": "x@example.com",
+            "password1": "Strong@pass9", "password2": "Strong@pass9"})
+        self.assertFalse(User.objects.filter(username="stranger").exists())
+
+    @override_settings(ALLOW_SIGNUP=None)
+    def test_demo_accounts_do_not_close_signup(self):
+        from django.core.management import call_command
+        call_command("setup_demo", stdout=open(os.devnull, "w"))
+        self.assertTrue(User.objects.filter(username="demo").exists())
+        self.assertContains(self.client.get(reverse("login")), "Create an account")
+
+    @override_settings(ALLOW_SIGNUP=True)
+    def test_can_be_forced_open(self):
+        User.objects.create_user("someone", password="Pass@12345")
         self.assertContains(self.client.get(reverse("login")), "Create an account")
 
 

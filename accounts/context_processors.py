@@ -7,14 +7,14 @@ def studio_context(request):
         notif_count = notifications.unread_count(request.user, studio)
         if getattr(request, "is_owner", False):
             _daily_backup()
-    from django.conf import settings
+    from .signup import signup_open
     needs_verify = False
     if request.user.is_authenticated and getattr(request, "is_owner", False) and request.user.email:
         profile = getattr(request.user, "profile", None)
         needs_verify = profile is not None and not profile.email_verified
     return {
         "needs_email_verify": needs_verify,
-        "allow_signup": getattr(settings, "ALLOW_SIGNUP", True),
+        "allow_signup": signup_open(),
         "notif_count": notif_count,
         "studio": studio,
         "is_owner": getattr(request, "is_owner", False),

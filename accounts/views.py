@@ -135,7 +135,8 @@ def logout_view(request):
 def signup(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
-    if not settings.ALLOW_SIGNUP:
+    from .signup import signup_open
+    if not signup_open():
         messages.info(request, "New accounts are closed. Ask the studio owner for a staff login.")
         return redirect("login")
     form = SignupForm(request.POST or None)

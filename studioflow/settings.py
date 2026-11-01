@@ -98,9 +98,14 @@ DATABASES = {
     }
 }
 
-# New studios can sign up ("Create an account"). Set SREEVA_ALLOW_SIGNUP=0 online
-# once your own studio is created, so strangers can't make accounts.
-ALLOW_SIGNUP = os.environ.get("SREEVA_ALLOW_SIGNUP", "1") == "1"
+# Who may create a new studio account ("Create an account"):
+#   not set (default) -> open only until the first real owner account exists, then
+#                        closed automatically, so strangers can't sign up afterwards
+#                        (the demo studio's accounts don't count)
+#   SREEVA_ALLOW_SIGNUP=1 -> always open (e.g. to let other studios sign up)
+#   SREEVA_ALLOW_SIGNUP=0 -> always closed
+_signup = os.environ.get("SREEVA_ALLOW_SIGNUP", "").strip()
+ALLOW_SIGNUP = {"1": True, "0": False}.get(_signup)  # None means automatic
 
 # --- Login --------------------------------------------------------------------
 AUTHENTICATION_BACKENDS = ["accounts.backends.CaseInsensitiveBackend"]
